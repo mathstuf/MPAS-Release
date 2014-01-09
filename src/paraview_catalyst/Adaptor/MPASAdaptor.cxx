@@ -77,34 +77,6 @@ using namespace MPAS;
 
 //////////////////////////////////////////////////////////////////////////
 //
-// Write the vtm file for debugging
-//
-//////////////////////////////////////////////////////////////////////////
-
-extern "C" void coprocessor_write_vtk_(int *timeStep)
-{
-  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
-      vtkCPAdaptorAPI::GetCoProcessorData()->
-                       GetInputDescriptionByName ("input")->GetGrid ());
-
-  char fname[64];
-  sprintf(fname, "mpas_ocean_%04d.vtm", *timeStep);
-
-  vtkTrivialProducer* producer = vtkTrivialProducer::New();
-  vtkXMLPUnstructuredGridWriter* writer = vtkXMLPUnstructuredGridWriter::New();
-
-  producer->SetOutput(grid);
-  producer->Update();
-  writer->SetInputConnection(producer->GetOutputPort());
-  writer->SetFileName(fname);
-  writer->Update();
-
-  producer->Delete();
-  writer->Delete();
-}
-
-//////////////////////////////////////////////////////////////////////////
-//
 // Create the coprocessing grid one time
 //
 //////////////////////////////////////////////////////////////////////////

@@ -164,8 +164,6 @@ module mpas_paraview_catalyst
                        block_ptr % diagnostics % relativeVorticity % dimSizes(2), \
                        block_ptr % diagnostics % relativeVorticity % array)
 
-      !call coprocessor_write_vtk(0)
-
       deallocate(cellGhost)
       deallocate(cellHalo)
       deallocate(vertexGhost)
@@ -234,8 +232,6 @@ module mpas_paraview_catalyst
                        block_ptr % diagnostics % relativeVorticity % dimSizes(1), \
                        block_ptr % diagnostics % relativeVorticity % dimSizes(2), \
                        block_ptr % diagnostics % relativeVorticity % array)
-
-      !call coprocessor_write_vtk(itime)
 
    end subroutine mpas_insitu_load_data!}}}
 
