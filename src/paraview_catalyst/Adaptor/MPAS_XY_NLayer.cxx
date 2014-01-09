@@ -66,7 +66,7 @@ void create_xy3D_grids(double* xCell,
     if (y < pminRange[1]) pminRange[1] = y;
     if (y > pmaxRange[1]) pmaxRange[1] = y;
   }
-  for (int dim = 0; dim < 3; dim++)
+  for (int dim = 0; dim < 2; dim++)
     poffset[dim] = pmaxRange[dim] - pminRange[dim];
 
   // Insert vertices which delineate primal mesh
