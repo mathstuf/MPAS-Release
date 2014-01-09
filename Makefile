@@ -233,16 +233,16 @@ LIBS =
 ifneq ($(wildcard $(PIO)/lib), ) # Check for newer PIO version
 	CPPINCLUDES = -I$(NETCDF)/include -I$(PIO)/include -I$(PNETCDF)/include
 	FCINCLUDES = -I$(NETCDF)/include -I$(PIO)/include -I$(PNETCDF)/include
-	LIBS = -L$(PIO)/lib -L$(PNETCDF)/lib -L$(NETCDF)/lib -lpio -lpnetcdf
+	LIBS = -L$(PIO)/lib -L$(PNETCDF)/lib -L$(NETCDF)/lib64 -lpio
 else
 	CPPINCLUDES = -I$(NETCDF)/include -I$(PIO) -I$(PNETCDF)/include
 	FCINCLUDES = -I$(NETCDF)/include -I$(PIO) -I$(PNETCDF)/include
-	LIBS = -L$(PIO) -L$(PNETCDF)/lib -L$(NETCDF)/lib -lpio -lpnetcdf
+	LIBS = -L$(PIO) -L$(PNETCDF)/lib -L$(NETCDF)/lib64 -lpio
 endif
 
 NCLIB = -lnetcdf
 NCLIBF = -lnetcdff
-ifneq ($(wildcard $(NETCDF)/lib/libnetcdff.*), ) # CHECK FOR NETCDF4
+ifneq ($(wildcard $(NETCDF)/lib64/libnetcdff.*), ) # CHECK FOR NETCDF4
 	LIBS += $(NCLIBF)
 endif # CHECK FOR NETCDF4
 LIBS += $(NCLIB)
@@ -289,7 +289,7 @@ PARALLEL_MESSAGE="Parallel version is on."
 ifeq "$(USE_PAPI)" "true"
 	CPPINCLUDES += -I$(PAPI)/include -D_PAPI
 	FCINCLUDES += -I$(PAPI)/include
-	LIBS += -L$(PAPI)/lib -lpapi
+	LIBS += -L$(PAPI)/lib64 -lpapi
 	PAPI_MESSAGE="Papi libraries are on."
 else # USE_PAPI IF
 	PAPI_MESSAGE="Papi libraries are off."

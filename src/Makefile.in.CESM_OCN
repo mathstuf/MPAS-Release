@@ -12,7 +12,7 @@ FFLAGS += -DMPAS_CESM
 CPPFLAGS += $(MODEL_FORMULATION) $(FILE_OFFSET) $(ZOLTAN_DEFINE) -DMPAS_CESM -D_MPI -DUNDERSCORE
 CPPINCLUDES += -I$(EXEROOT)/ocn/source/inc -I$(NETCDF)/include -I$(PIO) -I$(PNETCDF)/include
 FCINCLUDES += -I$(EXEROOT)/ocn/source/inc -I$(EXEROOT)/lib/include -I$(NETCDF)/include -I$(PIO) -I$(PNETCDF)/include
-LIBS += -L$(PIO) -L$(PNETCDF)/lib -L$(NETCDF)/lib -lpio -lpnetcdf -lnetcdf
+LIBS += -L$(PIO) -L$(PNETCDF)/lib -L$(NETCDF)/lib64 -lpio -lpnetcdf -lnetcdf
 
 all:
 	@echo $(CPPINCLUDES)
