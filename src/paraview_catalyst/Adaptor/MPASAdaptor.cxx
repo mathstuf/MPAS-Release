@@ -14,7 +14,6 @@
 #include "vtkCPDataDescription.h"
 #include "vtkCPInputDataDescription.h"
 #include "vtkCPProcessor.h"
-#include "vtkMultiBlockDataSet.h"
 #include "vtkMPI.h"
 #include "vtkMPICommunicator.h"
 #include "vtkMPIController.h"
@@ -23,7 +22,7 @@
 #include "vtkUnstructuredGrid.h"
 
 #include "vtkTrivialProducer.h"
-#include "vtkXMLPMultiBlockDataWriter.h"
+#include "vtkXMLPUnstructuredGridWriter.h"
 
 #include <float.h>
 #include <sstream>
@@ -85,7 +84,7 @@ using namespace MPAS;
 
 extern "C" void coprocessor_write_vtk_(int *timeStep)
 {
-  vtkMultiBlockDataSet* grid = vtkMultiBlockDataSet::SafeDownCast(
+  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
       vtkCPAdaptorAPI::GetCoProcessorData()->
                        GetInputDescriptionByName ("input")->GetGrid ());
 
@@ -93,7 +92,7 @@ extern "C" void coprocessor_write_vtk_(int *timeStep)
   sprintf(fname, "mpas_ocean_%04d.vtm", *timeStep);
 
   vtkTrivialProducer* producer = vtkTrivialProducer::New();
-  vtkXMLPMultiBlockDataWriter* writer = vtkXMLPMultiBlockDataWriter::New();
+  vtkXMLPUnstructuredGridWriter* writer = vtkXMLPUnstructuredGridWriter::New();
 
   producer->SetOutput(grid);
   producer->Update();
@@ -110,6 +109,10 @@ extern "C" void coprocessor_write_vtk_(int *timeStep)
 // Create the coprocessing grid one time
 //
 //////////////////////////////////////////////////////////////////////////
+
+#define grid_is_necessary(dataDesc, name)            \
+  (dataDesc->GetIfGridIsNecessary(name "-primal") || \
+   dataDesc->GetIfGridIsNecessary(name "-dual"))
 
 extern "C" void coprocessor_create_grid_(
                            int* nCells_,
@@ -177,37 +180,42 @@ extern "C" void coprocessor_create_grid_(
   vtkCPProcessor *proc = vtkCPAdaptorAPI::GetCoProcessor();
   vtkCPDataDescription *data = vtkCPAdaptorAPI::GetCoProcessorData();
   proc->RequestDataDescription(data);
-  if (data->GetIfGridIsNecessary("X_Y_NLAYER"))
+  if (grid_is_necessary(data, "X_Y_NLAYER"))
     // For X,Y cartesian with all layers create 3D cells in 3D space
     create_xy3D_grids(xCell_, yCell_,
                       xVertex_, yVertex_,
                       -10000.0);
-  if (data->GetIfGridIsNecessary("X_Y_Z_1LAYER"))
+  if (grid_is_necessary(data, "X_Y_Z_1LAYER"))
     // For X,Y,Z spherical with any one layer create 2D cells in 3D space
     create_xyz2D_grids(xCell_, yCell_, zCell_,
                        xVertex_, yVertex_, zVertex_);
-  if (data->GetIfGridIsNecessary("X_Y_Z_NLAYER"))
+  if (grid_is_necessary(data, "X_Y_Z_NLAYER"))
     // For X,Y,Z spherical with all layers create 3D cells in 3D space
     create_xyz3D_grids(xCell_, yCell_, zCell_,
                        xVertex_, yVertex_, zVertex_,
                        -50000.0);
-  if (data->GetIfGridIsNecessary("LON_LAT_1LAYER"))
+  if (grid_is_necessary(data, "LON_LAT_1LAYER"))
     // For lon/lat cartesian with any one layer create 2D cells in 3D space
     create_lonlat2D_grids(lonCell_, latCell_,
                           lonVertex_, latVertex_);
-  if (data->GetIfGridIsNecessary("LON_LAT_NLAYER"))
+  if (grid_is_necessary(data, "LON_LAT_NLAYER"))
     // For lon/lat cartesian with all layers create #D cells in 3D space
     create_lonlat3D_grids(lonCell_, latCell_,
                           lonVertex_, latVertex_,
                           -0.1);
 }
 
-#define check_datasets(call) \
-  call("X_Y_NLAYER", 3);     \
-  call("X_Y_Z_1LAYER", 2);   \
-  call("X_Y_Z_NLAYER", 3);   \
-  call("LON_LAT_1LAYER", 2); \
-  call("LON_LAT_NLAYER", 3);
+#define check_datasets(call)        \
+  call("X_Y_NLAYER-primal", 3);     \
+  call("X_Y_NLAYER-dual", 3);       \
+  call("X_Y_Z_1LAYER-primal", 2);   \
+  call("X_Y_Z_1LAYER-dual", 2);     \
+  call("X_Y_Z_NLAYER-primal", 3);   \
+  call("X_Y_Z_NLAYER-dual", 3);     \
+  call("LON_LAT_1LAYER-primal", 2); \
+  call("LON_LAT_1LAYER-dual", 2);   \
+  call("LON_LAT_NLAYER-primal", 3); \
+  call("LON_LAT_NLAYER-dual", 3);
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -223,7 +231,7 @@ static void register_data(
                       const char *datasetName,
                       int cellDim)
 {
-  vtkMultiBlockDataSet* grid = vtkMultiBlockDataSet::SafeDownCast(
+  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
       vtkCPAdaptorAPI::GetCoProcessorData()->
                        GetInputDescriptionByName (datasetName)->GetGrid ());
 
@@ -241,15 +249,16 @@ static void register_data(
     useCell = useDualCell;
   }
 
-  vtkUnstructuredGrid* ugrid =
-    vtkUnstructuredGrid::SafeDownCast(grid->GetBlock(type));
+  if (!useCell) {
+    return;
+  }
 
   vtkStdString name(fname);
   string::size_type pos = name.find(' ');
   vtkStdString varName = name.substr(0, pos); 
   vtkFloatArray* arr = vtkFloatArray::New();
   arr->SetName(varName.c_str());
-  ugrid->GetCellData()->AddArray(arr);
+  grid->GetCellData()->AddArray(arr);
 
   // 2D cells have a component for every layer
   if (cellDim == 2) {
@@ -291,11 +300,12 @@ extern "C" void coprocessor_register_data(
 {
   vtkCPDataDescription *dataDesc = vtkCPAdaptorAPI::GetCoProcessorData();
 
-#define coprocessor_register_dataset(name, dim)          \
-  do                                                     \
-  {                                                      \
-    if (dataDesc->GetIfGridIsNecessary(name))            \
-      register_data(fname, dim0, dim1, data, name, dim); \
+#define coprocessor_register_dataset(name, dim) \
+  do                                            \
+  {                                             \
+    if (dataDesc->GetIfGridIsNecessary(name))   \
+      register_data(fname, dim0, dim1, data,    \
+        name, dim);                             \
   } while (0)
 
   check_datasets(coprocessor_register_dataset)
@@ -322,7 +332,7 @@ static void register_tracer_data(
                       const char *datasetName,
                       int cellDim)
 {
-  vtkMultiBlockDataSet* grid = vtkMultiBlockDataSet::SafeDownCast(
+  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
       vtkCPAdaptorAPI::GetCoProcessorData()->
                        GetInputDescriptionByName (datasetName)->GetGrid ());
 
@@ -345,15 +355,16 @@ static void register_tracer_data(
     useCell = useDualCell;
   }
 
-  vtkUnstructuredGrid* ugrid =
-    vtkUnstructuredGrid::SafeDownCast(grid->GetBlock(type));
+  if (!useCell) {
+    return;
+  }
 
   vtkStdString name(fname);
   string::size_type pos = name.find(' ');
   vtkStdString varName = name.substr(0, pos); 
   vtkFloatArray* arr = vtkFloatArray::New();
   arr->SetName(varName.c_str());
-  ugrid->GetCellData()->AddArray(arr);
+  grid->GetCellData()->AddArray(arr);
 
   // 2D cells have a component for every layer
   if (cellDim == 2) {
@@ -398,11 +409,12 @@ extern "C" void coprocessor_register_tracer_data(
 {
   vtkCPDataDescription *dataDesc = vtkCPAdaptorAPI::GetCoProcessorData();
 
-#define coprocessor_register_tracer_dataset(name, dim)                        \
-  do                                                                          \
-  {                                                                           \
-    if (dataDesc->GetIfGridIsNecessary(name))                                 \
-      register_tracer_data(tindex, fname, dim0, dim1, dim2, data, name, dim); \
+#define coprocessor_register_tracer_dataset(name, dim)            \
+  do                                                              \
+  {                                                               \
+    if (dataDesc->GetIfGridIsNecessary(name))                     \
+      register_tracer_data(tindex, fname, dim0, dim1, dim2, data, \
+        name, dim);                                               \
   } while (0)
 
   check_datasets(coprocessor_register_tracer_dataset)
@@ -425,7 +437,7 @@ static void add_data(
                       const char *datasetName,
                       int cellDim)
 {
-  vtkMultiBlockDataSet* grid = vtkMultiBlockDataSet::SafeDownCast(
+  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
       vtkCPAdaptorAPI::GetCoProcessorData()->
                        GetInputDescriptionByName (datasetName)->GetGrid ());
 
@@ -443,14 +455,15 @@ static void add_data(
     useCell = useDualCell;
   }
 
-  vtkUnstructuredGrid* ugrid =
-    vtkUnstructuredGrid::SafeDownCast(grid->GetBlock(type));
+  if (!useCell) {
+    return;
+  }
 
   vtkStdString name(fname);
   string::size_type pos = name.find(' ');
   vtkStdString varName = name.substr(0, pos); 
   vtkFloatArray* arr =  vtkFloatArray::SafeDownCast(
-        ugrid->GetCellData()->GetArray(varName.c_str()));
+        grid->GetCellData()->GetArray(varName.c_str()));
   float* ptr = arr->GetPointer(0);
 
   // 2D cells have a component for every layer
@@ -487,11 +500,12 @@ extern "C" void coprocessor_add_data(int* itime,
 {
   vtkCPDataDescription *dataDesc = vtkCPAdaptorAPI::GetCoProcessorData();
 
-#define coprocessor_add_dataset(name, dim)                 \
-  do                                                       \
-  {                                                        \
-    if (dataDesc->GetIfGridIsNecessary(name))              \
-      add_data(itime, fname, dim0, dim1, data, name, dim); \
+#define coprocessor_add_dataset(name, dim)     \
+  do                                           \
+  {                                            \
+    if (dataDesc->GetIfGridIsNecessary(name))  \
+      add_data(itime, fname, dim0, dim1, data, \
+        name, dim);                            \
   } while (0)
 
   check_datasets(coprocessor_add_dataset)
@@ -516,7 +530,7 @@ static void add_tracer_data(
                       const char *datasetName,
                       int cellDim)
 {
-  vtkMultiBlockDataSet* grid = vtkMultiBlockDataSet::SafeDownCast(
+  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
       vtkCPAdaptorAPI::GetCoProcessorData()->
                        GetInputDescriptionByName (datasetName)->GetGrid ());
 
@@ -539,14 +553,15 @@ static void add_tracer_data(
     useCell = useDualCell;
   }
 
-  vtkUnstructuredGrid* ugrid =
-    vtkUnstructuredGrid::SafeDownCast(grid->GetBlock(type));
+  if (!useCell) {
+    return;
+  }
 
   vtkStdString name(fname);
   string::size_type pos = name.find(' ');
   vtkStdString varName = name.substr(0, pos); 
   vtkFloatArray* arr =  vtkFloatArray::SafeDownCast(
-        ugrid->GetCellData()->GetArray(varName.c_str()));
+        grid->GetCellData()->GetArray(varName.c_str()));
   float* ptr = arr->GetPointer(0);
 
   // 2D cells have a component for every layer
@@ -586,11 +601,12 @@ extern "C" void coprocessor_add_tracer_data(int* itime,
 {
   vtkCPDataDescription *dataDesc = vtkCPAdaptorAPI::GetCoProcessorData();
 
-#define coprocessor_add_tracer_dataset(name, dim)                               \
-  do                                                                            \
-  {                                                                             \
-    if (dataDesc->GetIfGridIsNecessary(name))                                   \
-      add_tracer_data(itime, tindex, fname, dim0, dim1, dim2, data, name, dim); \
+#define coprocessor_add_tracer_dataset(name, dim)                   \
+  do                                                                \
+  {                                                                 \
+    if (dataDesc->GetIfGridIsNecessary(name))                       \
+      add_tracer_data(itime, tindex, fname, dim0, dim1, dim2, data, \
+        name, dim);                                                 \
   } while (0)
 
   check_datasets(coprocessor_add_tracer_dataset)
@@ -605,11 +621,12 @@ extern "C" void mpas_initialize()
   vtkCPPythonAdaptorAPI::CoProcessorInitialize("mpas.py");
 
   vtkCPDataDescription *data = vtkCPAdaptorAPI::GetCoProcessorData();
-  data->AddInput("X_Y_NLAYER");
-  data->AddInput("X_Y_Z_1LAYER");
-  data->AddInput("X_Y_Z_NLAYER");
-  data->AddInput("LON_LAT_1LAYER");
-  data->AddInput("LON_LAT_NLAYER");
+#define coprocessor_add_dataset(name, dim) \
+  data->AddInput(name)
+
+  check_datasets(coprocessor_add_dataset)
+
+#undef coprocessor_add_dataset
 }
 
 extern "C" void mpas_coprocess()

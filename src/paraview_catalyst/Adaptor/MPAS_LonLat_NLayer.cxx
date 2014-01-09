@@ -17,7 +17,6 @@
 #include "vtkCPDataDescription.h"
 #include "vtkCPInputDataDescription.h"
 #include "vtkCPProcessor.h"
-#include "vtkMultiBlockDataSet.h"
 #include "vtkMPI.h"
 #include "vtkMPICommunicator.h"
 #include "vtkMPIController.h"
@@ -26,7 +25,6 @@
 #include "vtkUnstructuredGrid.h"
 
 #include "vtkTrivialProducer.h"
-#include "vtkXMLPMultiBlockDataWriter.h"
 
 #include <float.h>
 #include <sstream>
@@ -54,143 +52,146 @@ void create_lonlat3D_grids(double* xCell,
                            double* yVertex,
                            float zFactor)
 {
-  // Create enclosing multiblock data set and add to coprocessor
-  vtkMultiBlockDataSet* grid = vtkMultiBlockDataSet::New();
-  vtkCPAdaptorAPI::GetCoProcessorData()->
-                   GetInputDescriptionByName("LON_LAT_NLAYER")->SetGrid(grid);
-  grid->SetNumberOfBlocks(2);
-
   // Create the primal mesh (Voronoi polygons)
-  vtkUnstructuredGrid* pgrid = vtkUnstructuredGrid::New();
-  pgrid->Initialize();
-  grid->SetBlock(PRIMAL, pgrid);
+  if (vtkCPAdaptorAPI::GetCoProcessorData()->GetIfGridIsNecessary("LON_LAT_NLAYER-primal")) {
+    vtkUnstructuredGrid* pgrid = vtkUnstructuredGrid::New();
+    vtkCPAdaptorAPI::GetCoProcessorData()->
+                     GetInputDescriptionByName("LON_LAT_NLAYER-primal")->SetGrid(pgrid);
+    pgrid->Initialize();
+
+    // Insert vertices which delineate primal mesh
+    vtkPoints* pPts = vtkPoints::New();
+    pgrid->SetPoints(pPts);
+    pgrid->Allocate(totalPrimalCells, totalPrimalCells);
+    for (int i = 0; i < nPrimalVerts; i++)
+      for (int j = 0; j < (nVertLevels + 1); j++)
+        pPts->InsertNextPoint(xVertex[i], yVertex[i], zFactor * j);
+
+    // Make arrays to indicate regular cells which will be used to create mesh
+    usePrimalCell = new bool[nPrimalCells];
+    for (int i = 0; i < nPrimalCells; i++) {
+      usePrimalCell[i] = true;
+      for (int j = 0; j < nPrimalVertsPerCell; j++) {
+        if (verticesOnCell[(i * nPrimalVertsPerCell) + j] >= (nPrimalVerts + 1)) {
+          usePrimalCell[i] = false;
+        }
+      }
+    }
+
+    // Allocate ghost level array to be attached to cell data
+    vtkUnsignedCharArray* pghost = vtkUnsignedCharArray::New();
+    pghost->SetName("vtkGhostLevels");
+    pghost->Allocate(totalPrimalCells);
+    pgrid->GetCellData()->AddArray(pghost);
+
+    // Create the primal mesh of Voronoi polygons
+    create_lonlat3D_mesh(
+                PRIMAL, nPrimalCells, nPrimalVerts, nPrimalVertsPerCell,
+                nPrimalGhosts, primalGhostCell, primalGhostHalo,
+                xVertex, yVertex,
+                nEdgesOnCell, verticesOnCell, usePrimalCell, zFactor);
+
+    vtkFloatArray* rankarr = vtkFloatArray::New();
+    rankarr->SetName(rankName[PRIMAL].c_str());
+    rankarr->SetNumberOfComponents(1);
+    rankarr->Allocate(totalPrimalCells);
+    pgrid->GetCellData()->AddArray(rankarr);
+
+    vtkFloatArray* maskarr = vtkFloatArray::New();
+    maskarr->SetName(maskName[PRIMAL].c_str());
+    maskarr->SetNumberOfComponents(1);
+    maskarr->Allocate(totalPrimalCells);
+    pgrid->GetCellData()->AddArray(maskarr);
+
+    for (int id = 0; id < totalPrimalCells; id++)
+      rankarr->InsertNextValue((float) rank);
+    rankarr->Delete();
+
+    for (int j = 0; j < nPrimalCells; j++) {
+      for (int lev = 0; lev < nVertLevels; lev++) {
+        if (usePrimalCell[j] == 1) {
+          int findx = j * nVertLevels + lev;
+          maskarr->InsertNextValue((float) vertexMask[findx]);
+        }
+      }
+    }
+
+    pPts->Delete();
+    pgrid->Delete();
+  }
 
   // Create the dual mesh (Delaunay triangles)
-  vtkUnstructuredGrid* dgrid = vtkUnstructuredGrid::New();
-  dgrid->Initialize();
-  grid->SetBlock(DUAL, dgrid);
+  if (vtkCPAdaptorAPI::GetCoProcessorData()->GetIfGridIsNecessary("LON_LAT_NLAYER-dual")) {
+    vtkUnstructuredGrid* dgrid = vtkUnstructuredGrid::New();
+    vtkCPAdaptorAPI::GetCoProcessorData()->
+                     GetInputDescriptionByName("LON_LAT_NLAYER-dual")->SetGrid(dgrid);
+    dgrid->Initialize();
 
-  // Insert vertices which delineate primal mesh
-  vtkPoints* pPts = vtkPoints::New();
-  pgrid->SetPoints(pPts);
-  pgrid->Allocate(totalPrimalCells, totalPrimalCells);
-  for (int i = 0; i < nPrimalVerts; i++)
-    for (int j = 0; j < (nVertLevels + 1); j++)
-      pPts->InsertNextPoint(xVertex[i], yVertex[i], zFactor * j);
+    // Insert cell centers which delineate dual mesh
+    vtkPoints* dPts = vtkPoints::New();
+    dgrid->SetPoints(dPts);
+    dgrid->Allocate(totalDualCells, totalDualCells);
+    for (int i = 0; i < nDualVerts; i++)
+      for (int j = 0; j < (nVertLevels + 1); j++)
+        dPts->InsertNextPoint(xCell[i], yCell[i], zFactor * j);
 
-  // Insert cell centers which delineate dual mesh
-  vtkPoints* dPts = vtkPoints::New();
-  dgrid->SetPoints(dPts);
-  dgrid->Allocate(totalDualCells, totalDualCells);
-  for (int i = 0; i < nDualVerts; i++)
-    for (int j = 0; j < (nVertLevels + 1); j++)
-      dPts->InsertNextPoint(xCell[i], yCell[i], zFactor * j);
-
-  // Dual mesh has boundary cells in it with indices = nCells + 1
-  // Make arrays to indicate regular cells which will be used to create mesh
-  usePrimalCell = new bool[nPrimalCells];
-  useDualCell = new bool[nDualCells];
-  for (int i = 0; i < nPrimalCells; i++) {
-    usePrimalCell[i] = true;
-    for (int j = 0; j < nPrimalVertsPerCell; j++) {
-      if (verticesOnCell[(i * nPrimalVertsPerCell) + j] >= (nPrimalVerts + 1)) {
-        usePrimalCell[i] = false;
+    // Dual mesh has boundary cells in it with indices = nCells + 1
+    // Make arrays to indicate regular cells which will be used to create mesh
+    useDualCell = new bool[nDualCells];
+    for (int i = 0; i < nDualCells; i++) {
+      useDualCell[i] = true;
+      for (int j = 0; j < nDualVertsPerCell; j++) {
+        if (cellsOnVertex[(i * nDualVertsPerCell) + j] >= (nDualVerts + 1)) {
+          useDualCell[i] = false;
+        }
       }
     }
-  }
-  for (int i = 0; i < nDualCells; i++) {
-    useDualCell[i] = true;
-    for (int j = 0; j < nDualVertsPerCell; j++) {
-      if (cellsOnVertex[(i * nDualVertsPerCell) + j] >= (nDualVerts + 1)) {
-        useDualCell[i] = false;
+
+    // Allocate ghost level array to be attached to cell data
+    vtkUnsignedCharArray* dghost = vtkUnsignedCharArray::New();
+    dghost->SetName("vtkGhostLevels");
+    dghost->Allocate(totalDualCells);
+    dgrid->GetCellData()->AddArray(dghost);
+
+    // Create the dual mesh of Delaunay triangles
+    create_lonlat3D_mesh(
+                DUAL, nDualCells, nDualVerts, nDualVertsPerCell,
+                nDualGhosts, dualGhostCell, dualGhostHalo,
+                xCell, yCell,
+                nEdgesOnCell, cellsOnVertex, useDualCell, zFactor);
+
+    // Dual mesh has boundary cells which were not created so get the
+    // actual number of cells which is different from nDualCells
+    int nActualDualCells = dgrid->GetNumberOfCells();
+
+    vtkFloatArray* drankarr = vtkFloatArray::New();
+    drankarr->SetName(rankName[DUAL].c_str());
+    drankarr->SetNumberOfComponents(1);
+    drankarr->Allocate(nActualDualCells);
+    dgrid->GetCellData()->AddArray(drankarr);
+
+    vtkFloatArray* dmaskarr = vtkFloatArray::New();
+    dmaskarr->SetName(maskName[DUAL].c_str());
+    dmaskarr->SetNumberOfComponents(1);
+    dmaskarr->Allocate(totalDualCells);
+    dgrid->GetCellData()->AddArray(dmaskarr);
+
+    for (int id = 0; id < nActualDualCells; id++)
+      drankarr->InsertNextValue((float) rank);
+    drankarr->Delete();
+
+    for (int j = 0; j < nDualCells; j++) {
+      for (int lev = 0; lev < nVertLevels; lev++) {
+        if (useDualCell[j] == 1) {
+          int findx = j * nVertLevels + lev;
+          dmaskarr->InsertNextValue((float) cellMask[findx]);
+        }
       }
     }
+
+    dPts->Delete();
+    dgrid->Delete();
   }
-
-  // Allocate ghost level array to be attached to cell data
-  vtkUnsignedCharArray* pghost = vtkUnsignedCharArray::New();
-  pghost->SetName("vtkGhostLevels");
-  pghost->Allocate(totalPrimalCells);
-  pgrid->GetCellData()->AddArray(pghost);
-
-  vtkUnsignedCharArray* dghost = vtkUnsignedCharArray::New();
-  dghost->SetName("vtkGhostLevels");
-  dghost->Allocate(totalDualCells);
-  dgrid->GetCellData()->AddArray(dghost);
-
-  // Create the primal mesh of Voronoi polygons
-  create_lonlat3D_mesh(
-              PRIMAL, nPrimalCells, nPrimalVerts, nPrimalVertsPerCell,
-              nPrimalGhosts, primalGhostCell, primalGhostHalo,
-              xVertex, yVertex,
-              nEdgesOnCell, verticesOnCell, usePrimalCell, zFactor);
-
-  vtkFloatArray* rankarr = vtkFloatArray::New();
-  rankarr->SetName(rankName[PRIMAL].c_str());
-  rankarr->SetNumberOfComponents(1);
-  rankarr->Allocate(totalPrimalCells);
-  pgrid->GetCellData()->AddArray(rankarr);
-
-  vtkFloatArray* maskarr = vtkFloatArray::New();
-  maskarr->SetName(maskName[PRIMAL].c_str());
-  maskarr->SetNumberOfComponents(1);
-  maskarr->Allocate(totalPrimalCells);
-  pgrid->GetCellData()->AddArray(maskarr);
-
-  for (int id = 0; id < totalPrimalCells; id++)
-    rankarr->InsertNextValue((float) rank);
-  rankarr->Delete();
-
-  for (int j = 0; j < nPrimalCells; j++) {
-    for (int lev = 0; lev < nVertLevels; lev++) {
-      if (usePrimalCell[j] == 1) {
-        int findx = j * nVertLevels + lev;
-        maskarr->InsertNextValue((float) vertexMask[findx]);
-      }
-    }
-  }
-
-  // Create the dual mesh of Delaunay triangles
-  create_lonlat3D_mesh(
-              DUAL, nDualCells, nDualVerts, nDualVertsPerCell,
-              nDualGhosts, dualGhostCell, dualGhostHalo,
-              xCell, yCell,
-              nEdgesOnCell, cellsOnVertex, useDualCell, zFactor);
-
-  // Dual mesh has boundary cells which were not created so get the
-  // actual number of cells which is different from nDualCells
-  int nActualDualCells = dgrid->GetNumberOfCells();
-
-  vtkFloatArray* drankarr = vtkFloatArray::New();
-  drankarr->SetName(rankName[DUAL].c_str());
-  drankarr->SetNumberOfComponents(1);
-  drankarr->Allocate(nActualDualCells);
-  dgrid->GetCellData()->AddArray(drankarr);
-
-  vtkFloatArray* dmaskarr = vtkFloatArray::New();
-  dmaskarr->SetName(maskName[DUAL].c_str());
-  dmaskarr->SetNumberOfComponents(1);
-  dmaskarr->Allocate(totalDualCells);
-  dgrid->GetCellData()->AddArray(dmaskarr);
-
-  for (int id = 0; id < nActualDualCells; id++)
-    drankarr->InsertNextValue((float) rank);
-  drankarr->Delete();
-
-  for (int j = 0; j < nDualCells; j++) {
-    for (int lev = 0; lev < nVertLevels; lev++) {
-      if (useDualCell[j] == 1) {
-        int findx = j * nVertLevels + lev;
-        dmaskarr->InsertNextValue((float) cellMask[findx]);
-      }
-    }
-  }
-
-  pPts->Delete();
-  dPts->Delete();
-  pgrid->Delete();
-  dgrid->Delete();
-  grid->Delete();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -212,16 +213,15 @@ void create_lonlat3D_mesh(
                  bool* makeCell,
                  float zFactor)
 {
-  vtkMultiBlockDataSet* grid = vtkMultiBlockDataSet::SafeDownCast(
+  std::string suffix = (meshType == PRIMAL) ? "-primal" : "-dual";
+  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
       vtkCPAdaptorAPI::GetCoProcessorData()->
-                       GetInputDescriptionByName ("LON_LAT_NLAYER")->GetGrid ());
-  vtkUnstructuredGrid* ugrid =
-    vtkUnstructuredGrid::SafeDownCast(grid->GetBlock(meshType));
-  vtkPoints* pts = ugrid->GetPoints();
+                       GetInputDescriptionByName (("LON_LAT_NLAYER" + suffix).c_str())->GetGrid());
+  vtkPoints* pts = grid->GetPoints();
 
   // Allocate ghost level array to be attached to cell data
   vtkUnsignedCharArray* ghosts =  vtkUnsignedCharArray::SafeDownCast(
-        ugrid->GetCellData()->GetArray("vtkGhostLevels"));
+        grid->GetCellData()->GetArray("vtkGhostLevels"));
 
   // Add cells for mesh, doing wraparound of vertices when needed
   vtkIdType cell[verticesPerCell];
@@ -301,7 +301,7 @@ void create_lonlat3D_mesh(
         for (int j = 0; j < nEdges; j++) {
           cell3d[indx3d++] = cell[j] + level + 1;
         }
-        ugrid->InsertNextCell(cellType, 2*nEdges, cell3d);
+        grid->InsertNextCell(cellType, 2*nEdges, cell3d);
         ghosts->InsertNextValue(0);
       }
  

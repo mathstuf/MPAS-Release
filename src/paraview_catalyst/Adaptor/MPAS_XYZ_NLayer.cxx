@@ -18,7 +18,6 @@
 #include "vtkCPInputDataDescription.h"
 #include "vtkCPProcessor.h"
 #include "vtkMath.h"
-#include "vtkMultiBlockDataSet.h"
 #include "vtkMPI.h"
 #include "vtkMPICommunicator.h"
 #include "vtkMPIController.h"
@@ -27,7 +26,6 @@
 #include "vtkUnstructuredGrid.h"
 
 #include "vtkTrivialProducer.h"
-#include "vtkXMLPMultiBlockDataWriter.h"
 
 #include <float.h>
 #include <sstream>
@@ -94,161 +92,166 @@ void create_xyz3D_grids(
                         double* xVertex, double* yVertex, double* zVertex,
                         float zFactor)
 {
-  // Create enclosing multiblock data set and add to coprocessor
-  vtkMultiBlockDataSet* grid = vtkMultiBlockDataSet::New();
-  vtkCPAdaptorAPI::GetCoProcessorData()->
-                   GetInputDescriptionByName("X_Y_Z_NLAYER")->SetGrid(grid);
-  grid->SetNumberOfBlocks(2);
-
   // Create the primal mesh (Voronoi polygons)
-  vtkUnstructuredGrid* pgrid = vtkUnstructuredGrid::New();
-  pgrid->Initialize();
-  grid->SetBlock(PRIMAL, pgrid);
+  if (vtkCPAdaptorAPI::GetCoProcessorData()->GetIfGridIsNecessary("X_Y_Z_NLAYER-primal")) {
+    vtkUnstructuredGrid* pgrid = vtkUnstructuredGrid::New();
+    vtkCPAdaptorAPI::GetCoProcessorData()->
+                     GetInputDescriptionByName("X_Y_Z_NLAYER-primal")->SetGrid(pgrid);
+    pgrid->Initialize();
+
+    // Insert vertices which delineate primal mesh
+    vtkPoints* pPts = vtkPoints::New();
+    pgrid->SetPoints(pPts);
+    pgrid->Allocate(totalPrimalCells, totalPrimalCells);
+
+    double rho, phi, theta, rholevel;
+    double x, y, z;
+    for (int i = 0; i < nPrimalVerts; i++) {
+      CartesianToSpherical(xVertex[i], yVertex[i], zVertex[i],
+                           &rho, &phi, &theta);
+      for (int j = 0; j < (nVertLevels + 1); j++) {
+        rholevel = rho + (zFactor * j);
+        SphericalToCartesian(rholevel, phi, theta, &x, &y, &z);
+        pPts->InsertNextPoint(x, y, z);
+      }
+    }
+
+    // Allocate ghost level array to be attached to cell data
+    vtkUnsignedCharArray* pghost = vtkUnsignedCharArray::New();
+    pghost->SetName("vtkGhostLevels");
+    pghost->Allocate(totalPrimalCells);
+    pgrid->GetCellData()->AddArray(pghost);
+
+    // Make arrays to indicate good cells which will be used to create mesh
+    usePrimalCell = new bool[nPrimalCells];
+    for (int i = 0; i < nPrimalCells; i++) {
+      usePrimalCell[i] = true;
+      for (int j = 0; j < nPrimalVertsPerCell; j++) {
+        if (verticesOnCell[(i * nPrimalVertsPerCell) + j] >= (nPrimalVerts + 1)) {
+          usePrimalCell[i] = false;
+        }
+      }
+    }
+
+    // Create the primal mesh of Voronoi polygons
+    create_xyz3D_mesh(
+                PRIMAL, nPrimalCells, nPrimalVerts, nPrimalVertsPerCell,
+                nPrimalGhosts, primalGhostCell, primalGhostHalo,
+                xVertex, yVertex, zVertex,
+                xCell, yCell, zCell,
+                nEdgesOnCell, verticesOnCell, usePrimalCell);
+
+    vtkFloatArray* rankarr = vtkFloatArray::New();
+    rankarr->SetName(rankName[PRIMAL].c_str());
+    rankarr->SetNumberOfComponents(1);
+    rankarr->Allocate(totalPrimalCells);
+    pgrid->GetCellData()->AddArray(rankarr);
+
+    vtkFloatArray* maskarr = vtkFloatArray::New();
+    maskarr->SetName(maskName[PRIMAL].c_str());
+    maskarr->SetNumberOfComponents(1);
+    maskarr->Allocate(totalPrimalCells);
+    pgrid->GetCellData()->AddArray(maskarr);
+
+    for (int id = 0; id < totalPrimalCells; id++)
+      rankarr->InsertNextValue((float) rank);
+    rankarr->Delete();
+
+    for (int j = 0; j < nPrimalCells; j++) {
+      for (int lev = 0; lev < nVertLevels; lev++) {
+        if (usePrimalCell[j] == 1) {
+          int findx = j * nVertLevels + lev;
+          maskarr->InsertNextValue((float) vertexMask[findx]);
+        }
+      }
+    }
+
+    pPts->Delete();
+    pgrid->Delete();
+  }
 
   // Create the dual mesh (Delaunay triangles)
-  vtkUnstructuredGrid* dgrid = vtkUnstructuredGrid::New();
-  dgrid->Initialize();
-  grid->SetBlock(DUAL, dgrid);
+  if (vtkCPAdaptorAPI::GetCoProcessorData()->GetIfGridIsNecessary("X_Y_Z_NLAYER-dual")) {
+    vtkUnstructuredGrid* dgrid = vtkUnstructuredGrid::New();
+    vtkCPAdaptorAPI::GetCoProcessorData()->
+                     GetInputDescriptionByName("X_Y_Z_NLAYER-dual")->SetGrid(dgrid);
+    dgrid->Initialize();
 
-  // Insert vertices which delineate primal mesh
-  vtkPoints* pPts = vtkPoints::New();
-  pgrid->SetPoints(pPts);
-  pgrid->Allocate(totalPrimalCells, totalPrimalCells);
+    // Insert cell centers which delineate dual mesh
+    vtkPoints* dPts = vtkPoints::New();
+    dgrid->SetPoints(dPts);
+    dgrid->Allocate(nDualCells, nDualCells);
 
-  double rho, phi, theta, rholevel;
-  double x, y, z;
-  for (int i = 0; i < nPrimalVerts; i++) {
-    CartesianToSpherical(xVertex[i], yVertex[i], zVertex[i],
-                         &rho, &phi, &theta);
-    for (int j = 0; j < (nVertLevels + 1); j++) {
-      rholevel = rho + (zFactor * j);
-      SphericalToCartesian(rholevel, phi, theta, &x, &y, &z);
-      pPts->InsertNextPoint(x, y, z);
-    }
-  }
-
-  // Insert cell centers which delineate dual mesh
-  vtkPoints* dPts = vtkPoints::New();
-  dgrid->SetPoints(dPts);
-  dgrid->Allocate(nDualCells, nDualCells);
-
-  for (int i = 0; i < nDualVerts; i++) {
-    CartesianToSpherical(xCell[i], yCell[i], zCell[i],
-                         &rho, &phi, &theta);
-    for (int j = 0; j < (nVertLevels + 1); j++) {
-      rholevel = rho + (zFactor * j);
-      SphericalToCartesian(rholevel, phi, theta, &x, &y, &z);
-      dPts->InsertNextPoint(x, y, z);
-    }
-  }
-
-  // Allocate ghost level array to be attached to cell data
-  vtkUnsignedCharArray* pghost = vtkUnsignedCharArray::New();
-  pghost->SetName("vtkGhostLevels");
-  pghost->Allocate(totalPrimalCells);
-  pgrid->GetCellData()->AddArray(pghost);
-
-  vtkUnsignedCharArray* dghost = vtkUnsignedCharArray::New();
-  dghost->SetName("vtkGhostLevels");
-  dghost->Allocate(totalDualCells);
-  dgrid->GetCellData()->AddArray(dghost);
-
-  // Dual mesh has boundary cells in it with indices = nCells + 1
-  // Make arrays to indicate good cells which will be used to create mesh
-  usePrimalCell = new bool[nPrimalCells];
-  useDualCell = new bool[nDualCells];
-  for (int i = 0; i < nPrimalCells; i++) {
-    usePrimalCell[i] = true;
-    for (int j = 0; j < nPrimalVertsPerCell; j++) {
-      if (verticesOnCell[(i * nPrimalVertsPerCell) + j] >= (nPrimalVerts + 1)) {
-        usePrimalCell[i] = false;
+    double rho, phi, theta, rholevel;
+    double x, y, z;
+    for (int i = 0; i < nDualVerts; i++) {
+      CartesianToSpherical(xCell[i], yCell[i], zCell[i],
+                           &rho, &phi, &theta);
+      for (int j = 0; j < (nVertLevels + 1); j++) {
+        rholevel = rho + (zFactor * j);
+        SphericalToCartesian(rholevel, phi, theta, &x, &y, &z);
+        dPts->InsertNextPoint(x, y, z);
       }
     }
-  }
-  for (int i = 0; i < nDualCells; i++) {
-    useDualCell[i] = true;
-    for (int j = 0; j < nDualVertsPerCell; j++) {
-      if (cellsOnVertex[(i * nDualVertsPerCell) + j] >= (nDualVerts + 1)) {
-        useDualCell[i] = false;
+
+    // Allocate ghost level array to be attached to cell data
+    vtkUnsignedCharArray* dghost = vtkUnsignedCharArray::New();
+    dghost->SetName("vtkGhostLevels");
+    dghost->Allocate(totalDualCells);
+    dgrid->GetCellData()->AddArray(dghost);
+
+    // Dual mesh has boundary cells in it with indices = nCells + 1
+    // Make arrays to indicate good cells which will be used to create mesh
+    useDualCell = new bool[nDualCells];
+    for (int i = 0; i < nDualCells; i++) {
+      useDualCell[i] = true;
+      for (int j = 0; j < nDualVertsPerCell; j++) {
+        if (cellsOnVertex[(i * nDualVertsPerCell) + j] >= (nDualVerts + 1)) {
+          useDualCell[i] = false;
+        }
       }
     }
-  }
 
-  // Create the primal mesh of Voronoi polygons
-  create_xyz3D_mesh(
-              PRIMAL, nPrimalCells, nPrimalVerts, nPrimalVertsPerCell,
-              nPrimalGhosts, primalGhostCell, primalGhostHalo,
-              xVertex, yVertex, zVertex,
-              xCell, yCell, zCell,
-              nEdgesOnCell, verticesOnCell, usePrimalCell);
+    // Create the dual mesh of Delaunay triangles
+    create_xyz3D_mesh(
+                DUAL, nDualCells, nDualVerts, nDualVertsPerCell,
+                nDualGhosts, dualGhostCell, dualGhostHalo,
+                xCell, yCell, zCell,
+                xVertex, yVertex, zVertex,
+                nEdgesOnCell, cellsOnVertex, useDualCell);
 
-  vtkFloatArray* rankarr = vtkFloatArray::New();
-  rankarr->SetName(rankName[PRIMAL].c_str());
-  rankarr->SetNumberOfComponents(1);
-  rankarr->Allocate(totalPrimalCells);
-  pgrid->GetCellData()->AddArray(rankarr);
+    // Dual mesh has boundary cells which were not created so get the
+    // actual number of cells which is different from nDualCells
+    int nActualDualCells = dgrid->GetNumberOfCells();
 
-  vtkFloatArray* maskarr = vtkFloatArray::New();
-  maskarr->SetName(maskName[PRIMAL].c_str());
-  maskarr->SetNumberOfComponents(1);
-  maskarr->Allocate(totalPrimalCells);
-  pgrid->GetCellData()->AddArray(maskarr);
+    vtkFloatArray* drankarr = vtkFloatArray::New();
+    drankarr->SetName(rankName[DUAL].c_str());
+    drankarr->SetNumberOfComponents(1);
+    drankarr->Allocate(nActualDualCells);
+    dgrid->GetCellData()->AddArray(drankarr);
 
-  for (int id = 0; id < totalPrimalCells; id++)
-    rankarr->InsertNextValue((float) rank);
-  rankarr->Delete();
+    vtkFloatArray* dmaskarr = vtkFloatArray::New();
+    dmaskarr->SetName(maskName[DUAL].c_str());
+    dmaskarr->SetNumberOfComponents(1);
+    dmaskarr->Allocate(totalDualCells);
+    dgrid->GetCellData()->AddArray(dmaskarr);
 
-  for (int j = 0; j < nPrimalCells; j++) {
-    for (int lev = 0; lev < nVertLevels; lev++) {
-      if (usePrimalCell[j] == 1) {
-        int findx = j * nVertLevels + lev;
-        maskarr->InsertNextValue((float) vertexMask[findx]);
+    for (int id = 0; id < nActualDualCells; id++)
+      drankarr->InsertNextValue((float) rank);
+    drankarr->Delete();
+
+    for (int j = 0; j < nDualCells; j++) {
+      for (int lev = 0; lev < nVertLevels; lev++) {
+        if (useDualCell[j] == 1) {
+          int findx = j * nVertLevels + lev;
+          dmaskarr->InsertNextValue((float) cellMask[findx]);
+        }
       }
     }
+
+    dPts->Delete();
+    dgrid->Delete();
   }
-
-  // Create the dual mesh of Delaunay triangles
-  create_xyz3D_mesh(
-              DUAL, nDualCells, nDualVerts, nDualVertsPerCell,
-              nDualGhosts, dualGhostCell, dualGhostHalo,
-              xCell, yCell, zCell,
-              xVertex, yVertex, zVertex,
-              nEdgesOnCell, cellsOnVertex, useDualCell);
-
-  // Dual mesh has boundary cells which were not created so get the
-  // actual number of cells which is different from nDualCells
-  int nActualDualCells = dgrid->GetNumberOfCells();
-
-  vtkFloatArray* drankarr = vtkFloatArray::New();
-  drankarr->SetName(rankName[DUAL].c_str());
-  drankarr->SetNumberOfComponents(1);
-  drankarr->Allocate(nActualDualCells);
-  dgrid->GetCellData()->AddArray(drankarr);
-
-  vtkFloatArray* dmaskarr = vtkFloatArray::New();
-  dmaskarr->SetName(maskName[DUAL].c_str());
-  dmaskarr->SetNumberOfComponents(1);
-  dmaskarr->Allocate(totalDualCells);
-  dgrid->GetCellData()->AddArray(dmaskarr);
-
-  for (int id = 0; id < nActualDualCells; id++)
-    drankarr->InsertNextValue((float) rank);
-  drankarr->Delete();
-
-  for (int j = 0; j < nDualCells; j++) {
-    for (int lev = 0; lev < nVertLevels; lev++) {
-      if (useDualCell[j] == 1) {
-        int findx = j * nVertLevels + lev;
-        dmaskarr->InsertNextValue((float) cellMask[findx]);
-      }
-    }
-  }
-
-  pPts->Delete();
-  dPts->Delete();
-  pgrid->Delete();
-  dgrid->Delete();
-  grid->Delete();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -270,16 +273,15 @@ void create_xyz3D_mesh(
                  int* vertices,
                  bool* makeCell)
 {
-  vtkMultiBlockDataSet* grid = vtkMultiBlockDataSet::SafeDownCast(
+  std::string suffix = (meshType == PRIMAL) ? "-primal" : "-dual";
+  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
       vtkCPAdaptorAPI::GetCoProcessorData()->
-                       GetInputDescriptionByName ("X_Y_Z_NLAYER")->GetGrid ());
-  vtkUnstructuredGrid* ugrid =
-    vtkUnstructuredGrid::SafeDownCast(grid->GetBlock(meshType));
-  vtkPoints* pts = ugrid->GetPoints();
+                       GetInputDescriptionByName (("X_Y_Z_NLAYER" + suffix).c_str())->GetGrid());
+  vtkPoints* pts = grid->GetPoints();
 
   // Allocate ghost level array to be attached to cell data
   vtkUnsignedCharArray* ghosts =  vtkUnsignedCharArray::SafeDownCast(
-        ugrid->GetCellData()->GetArray("vtkGhostLevels"));
+        grid->GetCellData()->GetArray("vtkGhostLevels"));
 
   vtkIdType cell[verticesPerCell];
   vtkIdType cell3d[2*verticesPerCell];
@@ -332,7 +334,7 @@ void create_xyz3D_mesh(
         for (int j = 0; j < nEdges; j++) {
           cell3d[indx3d++] = cell[j] + level + 1;
         }
-        ugrid->InsertNextCell(cellType, 2*nEdges, cell3d);
+        grid->InsertNextCell(cellType, 2*nEdges, cell3d);
         ghosts->InsertNextValue(0);
       }
 
