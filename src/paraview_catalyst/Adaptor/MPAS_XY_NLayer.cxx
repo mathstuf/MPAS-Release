@@ -108,7 +108,8 @@ void create_xy3D_grids(double* xCell,
     pgrid->Allocate(totalPrimalCells, totalPrimalCells);
 
     // Make arrays to indicate regular cells which will be used to create mesh
-    usePrimalCell = new bool[nPrimalCells];
+    vector<bool>& usePrimalCell = usedCells["X_Y_NLAYER-primal"];
+    usePrimalCell.resize(nPrimalCells);
     for (int i = 0; i < nPrimalCells; i++) {
       usePrimalCell[i] = true;
       for (int j = 0; j < nPrimalVertsPerCell; j++) {
@@ -160,7 +161,8 @@ void create_xy3D_grids(double* xCell,
 
     // Dual mesh has boundary cells in it with indices = nCells + 1
     // Make arrays to indicate regular cells which will be used to create mesh
-    useDualCell = new bool[nDualCells];
+    vector<bool>& useDualCell = usedCells["X_Y_NLAYER-dual"];
+    useDualCell.resize(nDualCells);
     for (int i = 0; i < nDualCells; i++) {
       useDualCell[i] = true;
       for (int j = 0; j < nDualVertsPerCell; j++) {
@@ -223,7 +225,7 @@ void create_xy3D_mesh(
                  double* xCenter, double* yCenter,
                  int* nEdgesOnCell,
                  int* vertices,
-                 bool* makeCell,
+                 vector<bool> const& makeCell,
                  double* offset,
                  double* poffset,
                  float zFactor)

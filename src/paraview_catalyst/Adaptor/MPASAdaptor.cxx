@@ -70,8 +70,7 @@ namespace MPAS
   string rankName[] = {"primalRank", "dualRank"};
   string maskName[] = {"primalMask", "dualMask"};
 
-  bool* usePrimalCell;
-  bool* useDualCell;
+  map<string, vector<bool> > usedCells;
 }
 
 using namespace MPAS;
@@ -238,18 +237,8 @@ static void register_data(
   int numLevels = *dim0;
   int numCells = *dim1;
 
-  int type;
-  bool* useCell;
-  if (numCells == nPrimalCells) {
-    type = PRIMAL;
-    useCell = usePrimalCell;
-  }
-  else if (numCells == nDualCells) {
-    type = DUAL;
-    useCell = useDualCell;
-  }
-
-  if (!useCell) {
+  vector<bool>& useCell = usedCells[datasetName];
+  if (useCell.size() != numCells) {
     return;
   }
 
@@ -344,18 +333,8 @@ static void register_tracer_data(
   int perCell = numLevels * numTracers;
   int perLevel = numTracers;
 
-  int type;
-  bool* useCell;
-  if (numCells == nPrimalCells) {
-    type = PRIMAL;
-    useCell = usePrimalCell;
-  }
-  else if (numCells == nDualCells) {
-    type = DUAL;
-    useCell = useDualCell;
-  }
-
-  if (!useCell) {
+  vector<bool>& useCell = usedCells[datasetName];
+  if (useCell.size() != numCells) {
     return;
   }
 
@@ -444,18 +423,8 @@ static void add_data(
   int numLevels = *dim0;
   int numCells = *dim1;
 
-  int type;
-  bool* useCell;
-  if (numCells == nPrimalCells) {
-    type = PRIMAL;
-    useCell = usePrimalCell;
-  }
-  else if (numCells == nDualCells) {
-    type = DUAL;
-    useCell = useDualCell;
-  }
-
-  if (!useCell) {
+  vector<bool>& useCell = usedCells[datasetName];
+  if (useCell.size() != numCells) {
     return;
   }
 
@@ -542,18 +511,8 @@ static void add_tracer_data(
   int perCell = numLevels * numTracers;
   int perLevel = numTracers;
 
-  int type;
-  bool* useCell;
-  if (numCells == nPrimalCells) {
-    type = PRIMAL;
-    useCell = usePrimalCell;
-  }
-  else if (numCells == nDualCells) {
-    type = DUAL;
-    useCell = useDualCell;
-  }
-
-  if (!useCell) {
+  vector<bool>& useCell = usedCells[datasetName];
+  if (useCell.size() != numCells) {
     return;
   }
 

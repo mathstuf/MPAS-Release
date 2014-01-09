@@ -16,7 +16,9 @@
 #ifndef MPASAdaptor_h
 #define MPASAdaptor_h
 
+#include <map>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -75,8 +77,7 @@ namespace MPAS
   extern string maskName[];
 
   // Boundary cells are not complete enough to draw and must be omitted
-  extern bool* usePrimalCell;
-  extern bool* useDualCell;
+  extern map<string, vector<bool> > usedCells;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -103,7 +104,7 @@ void create_xy3D_mesh(
                  double* xCenter, double* yCenter,
                  int* nEdgesOnCell,
                  int* vertices,
-                 bool* makeCell,
+                 vector<bool> const& makeCell,
                  double* offset,
                  double* poffset,
                  float zFactor);
@@ -133,7 +134,7 @@ void create_xyz2D_mesh(
                  double* xCenter, double* yCenter, double* zCenter,
                  int* nEdgesOnCell,
                  int* vertices,
-                 bool* makeCell);
+                 vector<bool> const& makeCell);
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -161,7 +162,7 @@ void create_xyz3D_mesh(
                  double* xCenter, double* yCenter, double* zCenter,
                  int* nEdgesOnCell,
                  int* vertices,
-                 bool* makeCell);
+                 vector<bool> const& makeCell);
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -185,7 +186,7 @@ void create_lonlat2D_mesh(
                  double* xVertex, double* yVertex,
                  int* nEdgesOnCell,
                  int* vertices,
-                 bool* makeCell);
+                 vector<bool> const& makeCell);
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -210,7 +211,7 @@ void create_lonlat3D_mesh(
                  double* xVertex, double* yVertex,
                  int* nEdgesOnCell,
                  int* vertices,
-                 bool* makeCell,
+                 vector<bool> const& makeCell,
                  float zFactor);
 
 #endif

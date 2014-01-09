@@ -69,7 +69,8 @@ void create_lonlat3D_grids(double* xCell,
         pPts->InsertNextPoint(xVertex[i], yVertex[i], zFactor * j);
 
     // Make arrays to indicate regular cells which will be used to create mesh
-    usePrimalCell = new bool[nPrimalCells];
+    vector<bool>& usePrimalCell = usedCells["LON_LAT_NLAYER-primal"];
+    usePrimalCell.resize(nPrimalCells);
     for (int i = 0; i < nPrimalCells; i++) {
       usePrimalCell[i] = true;
       for (int j = 0; j < nPrimalVertsPerCell; j++) {
@@ -138,7 +139,8 @@ void create_lonlat3D_grids(double* xCell,
 
     // Dual mesh has boundary cells in it with indices = nCells + 1
     // Make arrays to indicate regular cells which will be used to create mesh
-    useDualCell = new bool[nDualCells];
+    vector<bool>& useDualCell = usedCells["LON_LAT_NLAYER-dual"];
+    useDualCell.resize(nDualCells);
     for (int i = 0; i < nDualCells; i++) {
       useDualCell[i] = true;
       for (int j = 0; j < nDualVertsPerCell; j++) {
@@ -211,7 +213,7 @@ void create_lonlat3D_mesh(
                  double* xVertex, double* yVertex,
                  int* nEdgesOnCell,
                  int* vertices,
-                 bool* makeCell,
+                 vector<bool> const& makeCell,
                  float zFactor)
 {
   std::string suffix = (meshType == PRIMAL) ? "-primal" : "-dual";
