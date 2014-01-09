@@ -18,6 +18,7 @@ FortranCInterface_HEADER(MPASAdaptorAPIMangling.h SYMBOLS
 include_directories(${MPASAdaptor_BINARY_DIR})
 
 set(MPASAdaptor_SRCS
+  GridUtils.cxx
   MPASAdaptor.cxx
   MPAS_XY_NLayer.cxx
   MPAS_XYZ_1Layer.cxx

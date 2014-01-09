@@ -1,4 +1,5 @@
 #include "MPASAdaptor.h"
+#include "GridUtils.h"
 
 #include "MPASAdaptorAPIMangling.h"
 
@@ -334,7 +335,10 @@ void create_xyz3D_mesh(
         for (int j = 0; j < nEdges; j++) {
           cell3d[indx3d++] = cell[j] + level + 1;
         }
-        grid->InsertNextCell(cellType, 2*nEdges, cell3d);
+        vtkIdType newCellId = grid->InsertNextCell(cellType, 2*nEdges, cell3d);
+        if (meshType == DUAL) {
+          orient_wedge_cell(grid, newCellId, cell3d);
+        }
         ghosts->InsertNextValue(0);
       }
 

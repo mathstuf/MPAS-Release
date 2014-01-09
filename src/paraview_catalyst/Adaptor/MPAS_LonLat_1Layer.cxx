@@ -1,4 +1,5 @@
 #include "MPASAdaptor.h"
+#include "GridUtils.h"
 
 #include "MPASAdaptorAPIMangling.h"
 
@@ -239,7 +240,10 @@ void create_lonlat2D_mesh(
         cell[vert] = cIndx;
         indx++;
       }
-      grid->InsertNextCell(cellType, nEdges, cell);
+      vtkIdType newCellId = grid->InsertNextCell(cellType, nEdges, cell);
+      if (meshType == DUAL) {
+        orient_triangle_cell(grid, newCellId, cell);
+      }
       ghosts->InsertNextValue(0);
  
       // Check list of ghost cell indices to see if this id is in it
