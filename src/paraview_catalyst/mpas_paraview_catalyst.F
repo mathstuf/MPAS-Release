@@ -101,6 +101,8 @@ module mpas_paraview_catalyst
         end do
       end do
 
+      call mpas_registerdata(0)
+
       print *,'COPROCESS create geometry',nCells,nVertices,maxEdges,vertexDegree,nVertLevels
       call coprocessor_create_grid( \
                        nCells, maxEdges, nGhostCell, cellGhost, cellHalo, \
@@ -180,6 +182,8 @@ module mpas_paraview_catalyst
       integer, intent(inout) :: itime
       integer :: indexT, indexS, numTracers
       real (kind=RKIND), dimension(:,:,:), pointer :: tracers
+
+      call mpas_registerdata(itime)
 
       print *,'COPROCESS mpas_load_data',itime
       block_ptr => domain % blocklist

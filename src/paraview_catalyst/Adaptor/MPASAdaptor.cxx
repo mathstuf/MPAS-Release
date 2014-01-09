@@ -629,6 +629,14 @@ extern "C" void mpas_initialize()
 #undef coprocessor_add_dataset
 }
 
+extern "C" void mpas_registerdata(int *step)
+{
+  int rstep = *step;
+  double time = rstep;
+  int ignore;
+  vtkCPAdaptorAPI::RequestDataDescription(&rstep, &time, &ignore);
+}
+
 extern "C" void mpas_coprocess()
 {
   vtkCPAdaptorAPI::CoProcess();
