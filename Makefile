@@ -248,7 +248,8 @@ endif # CHECK FOR NETCDF4
 LIBS += $(NCLIB)
 
 ifeq "$(USE_PARAVIEW)" "true"
-	LIBS += -lparaview -L$(PARAVIEW)/lib -Lparaview_catalyst/Adaptor-build -lMPASAdaptor 
+	PARAVIEW_CONFIG = $(PARAVIEW)/bin/paraview-config
+	LIBS += $(shell $(PARAVIEW_CONFIG) --libs --python vtkPVPythonCatalyst vtkPVServerManagerRendering vtkUtilitiesPythonInitializer) -lparaview -Lparaview_catalyst/Adaptor-build -lMPASAdaptor
 endif
 
 RM = rm -f
