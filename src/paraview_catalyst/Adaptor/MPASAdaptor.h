@@ -77,15 +77,6 @@ namespace MPAS
   // Boundary cells are not complete enough to draw and must be omitted
   extern bool* usePrimalCell;
   extern bool* useDualCell;
-
-  // Mesh depends on how points are entered
-  extern const int X_Y_NLAYER;     // 2D Cartesian with all layers
-  extern const int X_Y_Z_1LAYER;   // 3D spherical with any one layer
-  extern const int X_Y_Z_NLAYER;   // 3D spherical with any all layers
-  extern const int LON_LAT_1LAYER; // 2D map projection with one layer
-  extern const int LON_LAT_NLAYER; // 2D map projection with all layers
-  extern int pointType;
-  extern int cellDim;
 }
 
 //////////////////////////////////////////////////////////////////////////

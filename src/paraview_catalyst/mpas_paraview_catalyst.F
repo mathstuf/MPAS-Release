@@ -19,8 +19,7 @@ module mpas_paraview_catalyst
 
    subroutine mpas_insitu_initialize!{{{
 
-      print *,'COPROCESS initialize'
-      call coprocessorinitializewithpython("mpas.py", 7)
+      call mpas_initialize
 
    end subroutine mpas_insitu_initialize!}}}
 
@@ -163,7 +162,7 @@ module mpas_paraview_catalyst
                        block_ptr % diagnostics % relativeVorticity % dimSizes(2), \
                        block_ptr % diagnostics % relativeVorticity % array)
 
-      call coprocessor_write_vtk(0)
+      !call coprocessor_write_vtk(0)
 
       deallocate(cellGhost)
       deallocate(cellHalo)
@@ -232,7 +231,7 @@ module mpas_paraview_catalyst
                        block_ptr % diagnostics % relativeVorticity % dimSizes(2), \
                        block_ptr % diagnostics % relativeVorticity % array)
 
-      call coprocessor_write_vtk(itime)
+      !call coprocessor_write_vtk(itime)
 
    end subroutine mpas_insitu_load_data!}}}
 
@@ -243,7 +242,7 @@ module mpas_paraview_catalyst
       integer, intent(in) :: itime
 
       print *,'COPROCESS ',itime
-      call coprocess
+      call mpas_coprocess
 
    end subroutine mpas_insitu_coprocess!}}}
 
@@ -253,7 +252,7 @@ module mpas_paraview_catalyst
       implicit none
  
       print *,'COPROCESS finalize'
-      call coprocessorfinalize
+      call mpas_finalize
  
    end subroutine mpas_insitu_finalize!}}}
  

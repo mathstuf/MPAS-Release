@@ -56,7 +56,7 @@ void create_lonlat2D_grids(double* xCell,
   // Create enclosing multiblock data set and add to coprocessor
   vtkMultiBlockDataSet* grid = vtkMultiBlockDataSet::New();
   vtkCPAdaptorAPI::GetCoProcessorData()->
-                   GetInputDescriptionByName("input")->SetGrid(grid);
+                   GetInputDescriptionByName("LON_LAT_1LAYER")->SetGrid(grid);
   grid->SetNumberOfBlocks(2);
 
   // Create the primal mesh (Voronoi polygons)
@@ -180,7 +180,7 @@ void create_lonlat2D_mesh(
 {
   vtkMultiBlockDataSet* grid = vtkMultiBlockDataSet::SafeDownCast(
       vtkCPAdaptorAPI::GetCoProcessorData()->
-                       GetInputDescriptionByName ("input")->GetGrid ());
+                       GetInputDescriptionByName ("LON_LAT_1LAYER")->GetGrid ());
   vtkUnstructuredGrid* ugrid =
     vtkUnstructuredGrid::SafeDownCast(grid->GetBlock(meshType));
   vtkPoints* pts = ugrid->GetPoints();

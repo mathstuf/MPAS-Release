@@ -97,7 +97,7 @@ void create_xyz3D_grids(
   // Create enclosing multiblock data set and add to coprocessor
   vtkMultiBlockDataSet* grid = vtkMultiBlockDataSet::New();
   vtkCPAdaptorAPI::GetCoProcessorData()->
-                   GetInputDescriptionByName("input")->SetGrid(grid);
+                   GetInputDescriptionByName("X_Y_Z_NLAYER")->SetGrid(grid);
   grid->SetNumberOfBlocks(2);
 
   // Create the primal mesh (Voronoi polygons)
@@ -272,7 +272,7 @@ void create_xyz3D_mesh(
 {
   vtkMultiBlockDataSet* grid = vtkMultiBlockDataSet::SafeDownCast(
       vtkCPAdaptorAPI::GetCoProcessorData()->
-                       GetInputDescriptionByName ("input")->GetGrid ());
+                       GetInputDescriptionByName ("X_Y_Z_NLAYER")->GetGrid ());
   vtkUnstructuredGrid* ugrid =
     vtkUnstructuredGrid::SafeDownCast(grid->GetBlock(meshType));
   vtkPoints* pts = ugrid->GetPoints();

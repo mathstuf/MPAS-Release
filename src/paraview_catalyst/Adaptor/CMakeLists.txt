@@ -12,7 +12,8 @@ include(FortranCInterface)
 FortranCInterface_HEADER(MPASAdaptorAPIMangling.h SYMBOLS
   coprocessor_create_grid 
   coprocessor_register_tracer_data coprocessor_add_tracer_data
-  coprocessor_register_data coprocessor_add_data )
+  coprocessor_register_data coprocessor_add_data
+  mpas_initialize mpas_coprocess mpas_finalize  )
 
 include_directories(${MPASAdaptor_BINARY_DIR})
 
