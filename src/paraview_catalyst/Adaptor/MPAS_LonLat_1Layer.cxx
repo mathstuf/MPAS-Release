@@ -244,7 +244,7 @@ void create_lonlat2D_mesh(
       }
       vtkIdType newCellId = grid->InsertNextCell(cellType, nEdges, cell);
       if (meshType == DUAL) {
-        orient_triangle_cell(grid, newCellId, cell);
+        orient_plane_triangle_cell(grid, newCellId, cell);
       }
       ghosts->InsertNextValue(0);
  

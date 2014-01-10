@@ -219,7 +219,7 @@ void create_xyz2D_mesh(
        }
       vtkIdType newCellId = grid->InsertNextCell(cellType, nEdges, cell);
       if (meshType == DUAL) {
-        orient_triangle_cell(grid, newCellId, cell);
+        orient_sphere_triangle_cell(grid, newCellId, cell);
       }
        ghosts->InsertNextValue(0);
  

@@ -5,7 +5,12 @@
 
 class vtkUnstructuredGrid;
 
-void orient_triangle_cell(
+void orient_sphere_triangle_cell(
+                 vtkUnstructuredGrid *grid,
+                 vtkIdType id,
+                 vtkIdType cellPts[3]);
+
+void orient_plane_triangle_cell(
                  vtkUnstructuredGrid *grid,
                  vtkIdType id,
                  vtkIdType cellPts[3]);

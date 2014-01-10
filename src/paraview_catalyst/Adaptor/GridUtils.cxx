@@ -6,7 +6,7 @@
 #include "vtkUnstructuredGrid.h"
 #include "vtkWedge.h"
 
-void orient_triangle_cell(
+void orient_sphere_triangle_cell(
                  vtkUnstructuredGrid *grid,
                  vtkIdType id,
                  vtkIdType cellPts[3])
@@ -23,6 +23,26 @@ void orient_triangle_cell(
   pts->GetPoint(0, pt);
   vtkMath::Normalize(pt);
   if (abs(acos(vtkMath::Dot(pt, norm))) > M_PI_2) {
+    vtkIdType newCell2d[3];
+    newCell2d[0] = cellPts[1];
+    newCell2d[1] = cellPts[0];
+    newCell2d[2] = cellPts[2];
+    grid->ReplaceCell(id, 3, newCell2d);
+  }
+}
+
+void orient_plane_triangle_cell(
+                 vtkUnstructuredGrid *grid,
+                 vtkIdType id,
+                 vtkIdType cellPts[3])
+{
+  vtkCell *newCell = grid->GetCell(id);
+
+  double norm[3];
+  vtkPoints *pts = newCell->GetPoints();
+  vtkIdType ids[] = {0, 1, 2};
+  vtkTriangle::ComputeNormal(pts, 3, ids, norm);
+  if (norm[2] < 0) {
     vtkIdType newCell2d[3];
     newCell2d[0] = cellPts[1];
     newCell2d[1] = cellPts[0];
