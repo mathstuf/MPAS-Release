@@ -5,7 +5,7 @@ OBJS = mpas_paraview_catalyst.o
 all: paraview
 
 paraview: $(OBJS)
-	( cd Adaptor-build; cmake ../Adaptor; make)
+	( cd Adaptor-build; cmake -DParaView_DIR="$(PARAVIEW)/lib/cmake/paraview-4.1" ../Adaptor; make)
 	ar -ru libparaview.a $(OBJS)
 
 mpas_paraview_catalyst.o: 

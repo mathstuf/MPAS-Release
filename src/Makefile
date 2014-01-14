@@ -36,7 +36,7 @@ frame: $(AUTOCLEAN_DEPS) reg_includes externals
 
 ifeq "$(USE_PARAVIEW)" "true"
 paraview: $(AUTOCLEAN_DEPS) frame
-	( cd paraview_catalyst; $(MAKE) CPPFLAGS="$(CPPFLAGS)" CPPINCLUDES="$(CPPINCLUDES)" all ) 
+	( cd paraview_catalyst; $(MAKE) PARAVIEW="$(PARAVIEW)" CPPFLAGS="$(CPPFLAGS)" CPPINCLUDES="$(CPPINCLUDES)" all ) 
 	ln -sf paraview_catalyst/libparaview.a libparaview.a
 endif
 

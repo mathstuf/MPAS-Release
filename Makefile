@@ -383,6 +383,7 @@ endif
                  CORE="$(CORE)"\
                  AUTOCLEAN="$(AUTOCLEAN)" \
                  USE_PARAVIEW="$(USE_PARAVIEW)" \
+                 PARAVIEW="$(PARAVIEW)" \
                  GEN_F90="$(GEN_F90)"
 	@echo "$(CORE)" > .mpas_core_$(CORE)
 	if [ -e src/$(CORE)_model ]; then mv src/$(CORE)_model .; fi
