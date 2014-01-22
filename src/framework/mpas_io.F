@@ -325,7 +325,7 @@ module mpas_io
          pio_iotype = master_pio_iotype
       else
          if (ioformat == MPAS_IO_PNETCDF) then
-            pio_iotype = PIO_iotype_pnetcdf
+            pio_iotype = PIO_iotype_netcdf
          else
             pio_iotype = PIO_iotype_netcdf
          end if
