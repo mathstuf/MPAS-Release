@@ -3,9 +3,6 @@
 
 #include "MPASAdaptorAPIMangling.h"
 
-#include "FortranAdaptorAPI.h"
-#include "FortranPythonAdaptorAPI.h"
-
 #include "vtkFloatArray.h"
 #include "vtkDoubleArray.h"
 #include "vtkUnsignedCharArray.h"
@@ -13,8 +10,6 @@
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
 #include "vtkCellType.h"
-#include "vtkCPAdaptorAPI.h"
-#include "vtkCPPythonAdaptorAPI.h"
 #include "vtkCPDataDescription.h"
 #include "vtkCPInputDataDescription.h"
 #include "vtkCPProcessor.h"
@@ -38,6 +33,19 @@
 using namespace std;
 using namespace MPAS;
 
+void create_lonlat3D_mesh(
+		 vtkUnstructuredGrid* grid,
+                 int meshType,
+                 int numberOfCells,
+                 int numberOfVertices,
+                 int verticesPerCell,
+                 int numberOfGhosts,
+                 int* ghostCell, int* ghostLevel,
+                 double* xVertex, double* yVertex,
+                 int* nEdgesOnCell,
+                 int* vertices,
+                 vector<bool> const& makeCell,
+                 float zFactor);
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -47,17 +55,18 @@ using namespace MPAS;
 //
 //////////////////////////////////////////////////////////////////////////
 
-void create_lonlat3D_grids(double* xCell,
+void create_lonlat3D_grids(vtkCPDataDescription* data,
+			   double* xCell,
                            double* yCell,
                            double* xVertex,
                            double* yVertex,
                            float zFactor)
 {
   // Create the primal mesh (Voronoi polygons)
-  if (vtkCPAdaptorAPI::GetCoProcessorData()->GetIfGridIsNecessary("LON_LAT_NLAYER-primal")) {
+  if (data->GetIfGridIsNecessary("LON_LAT_NLAYER-primal") &&
+      data->GetInputDescriptionByName("LON_LAT_NLAYER-primal")->GetGrid() == NULL) {
     vtkUnstructuredGrid* pgrid = vtkUnstructuredGrid::New();
-    vtkCPAdaptorAPI::GetCoProcessorData()->
-                     GetInputDescriptionByName("LON_LAT_NLAYER-primal")->SetGrid(pgrid);
+    data->GetInputDescriptionByName("LON_LAT_NLAYER-primal")->SetGrid(pgrid);
     pgrid->Initialize();
 
     // Insert vertices which delineate primal mesh
@@ -88,7 +97,7 @@ void create_lonlat3D_grids(double* xCell,
 
     // Create the primal mesh of Voronoi polygons
     create_lonlat3D_mesh(
-                PRIMAL, nPrimalCells, nPrimalVerts, nPrimalVertsPerCell,
+		pgrid, PRIMAL, nPrimalCells, nPrimalVerts, nPrimalVertsPerCell,
                 nPrimalGhosts, primalGhostCell, primalGhostHalo,
                 xVertex, yVertex,
                 nEdgesOnCell, verticesOnCell, usePrimalCell, zFactor);
@@ -123,10 +132,10 @@ void create_lonlat3D_grids(double* xCell,
   }
 
   // Create the dual mesh (Delaunay triangles)
-  if (vtkCPAdaptorAPI::GetCoProcessorData()->GetIfGridIsNecessary("LON_LAT_NLAYER-dual")) {
+  if (data->GetIfGridIsNecessary("LON_LAT_NLAYER-dual") &&
+      data->GetInputDescriptionByName("LON_LAT_NLAYER-dual")->GetGrid() == NULL) {
     vtkUnstructuredGrid* dgrid = vtkUnstructuredGrid::New();
-    vtkCPAdaptorAPI::GetCoProcessorData()->
-                     GetInputDescriptionByName("LON_LAT_NLAYER-dual")->SetGrid(dgrid);
+    data->GetInputDescriptionByName("LON_LAT_NLAYER-dual")->SetGrid(dgrid);
     dgrid->Initialize();
 
     // Insert cell centers which delineate dual mesh
@@ -158,7 +167,7 @@ void create_lonlat3D_grids(double* xCell,
 
     // Create the dual mesh of Delaunay triangles
     create_lonlat3D_mesh(
-                DUAL, nDualCells, nDualVerts, nDualVertsPerCell,
+		dgrid, DUAL, nDualCells, nDualVerts, nDualVertsPerCell,
                 nDualGhosts, dualGhostCell, dualGhostHalo,
                 xCell, yCell,
                 nEdgesOnCell, cellsOnVertex, useDualCell, zFactor);
@@ -204,6 +213,7 @@ void create_lonlat3D_grids(double* xCell,
 //////////////////////////////////////////////////////////////////////////
 
 void create_lonlat3D_mesh(
+		 vtkUnstructuredGrid* grid,
                  int meshType,
                  int numberOfCells,
                  int numberOfVertices,
@@ -217,9 +227,6 @@ void create_lonlat3D_mesh(
                  float zFactor)
 {
   std::string suffix = (meshType == PRIMAL) ? "-primal" : "-dual";
-  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
-      vtkCPAdaptorAPI::GetCoProcessorData()->
-                       GetInputDescriptionByName (("LON_LAT_NLAYER" + suffix).c_str())->GetGrid());
   vtkPoints* pts = grid->GetPoints();
 
   // Allocate ghost level array to be attached to cell data

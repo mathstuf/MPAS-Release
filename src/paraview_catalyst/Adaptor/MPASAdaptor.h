@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 #include <vector>
+class vtkCPDataDescription;
 
 using namespace std;
 
@@ -87,26 +88,11 @@ namespace MPAS
 //////////////////////////////////////////////////////////////////////////
 
 void create_xy3D_grids(
+		 vtkCPDataDescription* data,
                  double* xCell,
                  double* yCell,
                  double* xVert,
                  double* yVert,
-                 float zFactor);
-
-void create_xy3D_mesh(
-                 int meshType,
-                 int numberOfCells,
-                 int numberOfVertices,
-                 int verticesPerCell,
-                 int numberOfGhosts,
-                 int* ghostCell, int* ghostLevel,
-                 double* xVertex, double* yVertex,
-                 double* xCenter, double* yCenter,
-                 int* nEdgesOnCell,
-                 int* vertices,
-                 vector<bool> const& makeCell,
-                 double* offset,
-                 double* poffset,
                  float zFactor);
 
 //////////////////////////////////////////////////////////////////////////
@@ -116,25 +102,13 @@ void create_xy3D_mesh(
 //////////////////////////////////////////////////////////////////////////
 
 void create_xyz2D_grids(
+		 vtkCPDataDescription* data,
                  double* xCell,
                  double* yCell,
                  double* zCell,
                  double* xVert,
                  double* yVert,
                  double* zVert);
-
-void create_xyz2D_mesh(
-                 int meshType,
-                 int numberOfCells,
-                 int numberOfVertices,
-                 int verticesPerCell,
-                 int numberOfGhosts,
-                 int* ghostCell, int* ghostLevel,
-                 double* xVertex, double* yVertex, double* zVertex,
-                 double* xCenter, double* yCenter, double* zCenter,
-                 int* nEdgesOnCell,
-                 int* vertices,
-                 vector<bool> const& makeCell);
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -143,6 +117,7 @@ void create_xyz2D_mesh(
 //////////////////////////////////////////////////////////////////////////
 
 void create_xyz3D_grids(
+		 vtkCPDataDescription* data,
                  double* xCell,
                  double* yCell,
                  double* zCell,
@@ -151,19 +126,6 @@ void create_xyz3D_grids(
                  double* zVert,
                  float zFactor);
 
-void create_xyz3D_mesh(
-                 int meshType,
-                 int numberOfCells,
-                 int numberOfVertices,
-                 int verticesPerCell,
-                 int numberOfGhosts,
-                 int* ghostCell, int* ghostLevel,
-                 double* xVertex, double* yVertex, double* zVertex,
-                 double* xCenter, double* yCenter, double* zCenter,
-                 int* nEdgesOnCell,
-                 int* vertices,
-                 vector<bool> const& makeCell);
-
 //////////////////////////////////////////////////////////////////////////
 //
 // Lon/lat mesh creation and data load methods called from MPASAdaptor
@@ -171,22 +133,11 @@ void create_xyz3D_mesh(
 //////////////////////////////////////////////////////////////////////////
 
 void create_lonlat2D_grids(
+		 vtkCPDataDescription* data,
                  double* xCell,
                  double* yCell,
                  double* xVert,
                  double* yVert);
-
-void create_lonlat2D_mesh(
-                 int meshType,
-                 int numberOfCells,
-                 int numberOfVertices,
-                 int verticesPerCell,
-                 int numberOfGhosts,
-                 int* ghostCell, int* ghostLevel,
-                 double* xVertex, double* yVertex,
-                 int* nEdgesOnCell,
-                 int* vertices,
-                 vector<bool> const& makeCell);
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -195,23 +146,11 @@ void create_lonlat2D_mesh(
 //////////////////////////////////////////////////////////////////////////
 
 void create_lonlat3D_grids(
+		 vtkCPDataDescription* data,
                  double* xCell,
                  double* yCell,
                  double* xVert,
                  double* yVert,
-                 float zFactor);
-
-void create_lonlat3D_mesh(
-                 int meshType,
-                 int numberOfCells,
-                 int numberOfVertices,
-                 int verticesPerCell,
-                 int numberOfGhosts,
-                 int* ghostCell, int* ghostLevel,
-                 double* xVertex, double* yVertex,
-                 int* nEdgesOnCell,
-                 int* vertices,
-                 vector<bool> const& makeCell,
                  float zFactor);
 
 #endif

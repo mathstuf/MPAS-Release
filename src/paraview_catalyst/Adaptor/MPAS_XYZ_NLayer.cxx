@@ -3,9 +3,6 @@
 
 #include "MPASAdaptorAPIMangling.h"
 
-#include "FortranAdaptorAPI.h"
-#include "FortranPythonAdaptorAPI.h"
-
 #include "vtkFloatArray.h"
 #include "vtkDoubleArray.h"
 #include "vtkUnsignedCharArray.h"
@@ -13,8 +10,6 @@
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
 #include "vtkCellType.h"
-#include "vtkCPAdaptorAPI.h"
-#include "vtkCPPythonAdaptorAPI.h"
 #include "vtkCPDataDescription.h"
 #include "vtkCPInputDataDescription.h"
 #include "vtkCPProcessor.h"
@@ -25,8 +20,6 @@
 #include "vtkPoints.h"
 #include "vtkPointData.h"
 #include "vtkUnstructuredGrid.h"
-
-#include "vtkTrivialProducer.h"
 
 #include <float.h>
 #include <sstream>
@@ -39,6 +32,19 @@
 using namespace std;
 using namespace MPAS;
 
+void create_xyz3D_mesh(
+                 vtkUnstructuredGrid* grid,
+                 int meshType,
+                 int numberOfCells,
+                 int numberOfVertices,
+                 int verticesPerCell,
+                 int numberOfGhosts,
+                 int* ghostCell, int* ghostLevel,
+                 double* xVertex, double* yVertex, double* zVertex,
+                 double* xCenter, double* yCenter, double* zCenter,
+                 int* nEdgesOnCell,
+                 int* vertices,
+                 vector<bool> const& makeCell);
 //////////////////////////////////////////////////////////////////////////
 //
 // To get vertical levels starting from spherical x,y,z
@@ -89,15 +95,16 @@ int SphericalToCartesian(double rho, double phi, double theta,
 //////////////////////////////////////////////////////////////////////////
 
 void create_xyz3D_grids(
+			vtkCPDataDescription* data,
                         double* xCell,double* yCell, double* zCell,
                         double* xVertex, double* yVertex, double* zVertex,
                         float zFactor)
 {
   // Create the primal mesh (Voronoi polygons)
-  if (vtkCPAdaptorAPI::GetCoProcessorData()->GetIfGridIsNecessary("X_Y_Z_NLAYER-primal")) {
+  if (data->GetIfGridIsNecessary("X_Y_Z_NLAYER-primal") &&
+      data->GetInputDescriptionByName("X_Y_Z_NLAYER-primal")->GetGrid() == NULL) {
     vtkUnstructuredGrid* pgrid = vtkUnstructuredGrid::New();
-    vtkCPAdaptorAPI::GetCoProcessorData()->
-                     GetInputDescriptionByName("X_Y_Z_NLAYER-primal")->SetGrid(pgrid);
+    data->GetInputDescriptionByName("X_Y_Z_NLAYER-primal")->SetGrid(pgrid);
     pgrid->Initialize();
 
     // Insert vertices which delineate primal mesh
@@ -137,7 +144,7 @@ void create_xyz3D_grids(
 
     // Create the primal mesh of Voronoi polygons
     create_xyz3D_mesh(
-                PRIMAL, nPrimalCells, nPrimalVerts, nPrimalVertsPerCell,
+                pgrid, PRIMAL, nPrimalCells, nPrimalVerts, nPrimalVertsPerCell,
                 nPrimalGhosts, primalGhostCell, primalGhostHalo,
                 xVertex, yVertex, zVertex,
                 xCell, yCell, zCell,
@@ -173,10 +180,10 @@ void create_xyz3D_grids(
   }
 
   // Create the dual mesh (Delaunay triangles)
-  if (vtkCPAdaptorAPI::GetCoProcessorData()->GetIfGridIsNecessary("X_Y_Z_NLAYER-dual")) {
+  if (data->GetIfGridIsNecessary("X_Y_Z_NLAYER-dual") &&
+      data->GetInputDescriptionByName("X_Y_Z_NLAYER-dual")->GetGrid() == NULL) {
     vtkUnstructuredGrid* dgrid = vtkUnstructuredGrid::New();
-    vtkCPAdaptorAPI::GetCoProcessorData()->
-                     GetInputDescriptionByName("X_Y_Z_NLAYER-dual")->SetGrid(dgrid);
+    data->GetInputDescriptionByName("X_Y_Z_NLAYER-dual")->SetGrid(dgrid);
     dgrid->Initialize();
 
     // Insert cell centers which delineate dual mesh
@@ -217,7 +224,7 @@ void create_xyz3D_grids(
 
     // Create the dual mesh of Delaunay triangles
     create_xyz3D_mesh(
-                DUAL, nDualCells, nDualVerts, nDualVertsPerCell,
+		dgrid, DUAL, nDualCells, nDualVerts, nDualVertsPerCell,
                 nDualGhosts, dualGhostCell, dualGhostHalo,
                 xCell, yCell, zCell,
                 xVertex, yVertex, zVertex,
@@ -264,6 +271,7 @@ void create_xyz3D_grids(
 //////////////////////////////////////////////////////////////////////////
 
 void create_xyz3D_mesh(
+                 vtkUnstructuredGrid* grid,
                  int meshType,
                  int numberOfCells,
                  int numberOfVertices,
@@ -277,9 +285,6 @@ void create_xyz3D_mesh(
                  vector<bool> const& makeCell)
 {
   std::string suffix = (meshType == PRIMAL) ? "-primal" : "-dual";
-  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
-      vtkCPAdaptorAPI::GetCoProcessorData()->
-                       GetInputDescriptionByName (("X_Y_Z_NLAYER" + suffix).c_str())->GetGrid());
   vtkPoints* pts = grid->GetPoints();
 
   // Allocate ghost level array to be attached to cell data

@@ -9,11 +9,10 @@
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
 #include "vtkCellType.h"
-#include "vtkCPAdaptorAPI.h"
-#include "vtkCPPythonAdaptorAPI.h"
 #include "vtkCPDataDescription.h"
 #include "vtkCPInputDataDescription.h"
 #include "vtkCPProcessor.h"
+#include "vtkCPPythonScriptPipeline.h"
 #include "vtkMPI.h"
 #include "vtkMPICommunicator.h"
 #include "vtkMPIController.h"
@@ -71,9 +70,13 @@ namespace MPAS
   string maskName[] = {"primalMask", "dualMask"};
 
   map<string, vector<bool> > usedCells;
+
+  vtkCPProcessor* Processor = NULL;
+  vtkCPDataDescription* Data = NULL;
 }
 
 using namespace MPAS;
+
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -148,30 +151,33 @@ extern "C" void coprocessor_create_grid_(
   dualGhostHalo = vertexHalos_;
   totalDualCells = nDualCells * nVertLevels;
 
-  vtkCPProcessor *proc = vtkCPAdaptorAPI::GetCoProcessor();
-  vtkCPDataDescription *data = vtkCPAdaptorAPI::GetCoProcessorData();
-  proc->RequestDataDescription(data);
-  if (grid_is_necessary(data, "X_Y_NLAYER"))
+  // We set the time data to 0 assuming that all pipelines will
+  // want to update with these values.
+  Data->SetTimeData(0, 0);
+  // Processor->RequestDataDescription() only checks which grids
+  // will be needed but doesn't do any substantial computation.
+  Processor->RequestDataDescription(Data);
+  if (grid_is_necessary(Data, "X_Y_NLAYER"))
     // For X,Y cartesian with all layers create 3D cells in 3D space
-    create_xy3D_grids(xCell_, yCell_,
+    create_xy3D_grids(Data, xCell_, yCell_,
                       xVertex_, yVertex_,
                       -10000.0);
-  if (grid_is_necessary(data, "X_Y_Z_1LAYER"))
+  if (grid_is_necessary(Data, "X_Y_Z_1LAYER"))
     // For X,Y,Z spherical with any one layer create 2D cells in 3D space
-    create_xyz2D_grids(xCell_, yCell_, zCell_,
+    create_xyz2D_grids(Data, xCell_, yCell_, zCell_,
                        xVertex_, yVertex_, zVertex_);
-  if (grid_is_necessary(data, "X_Y_Z_NLAYER"))
+  if (grid_is_necessary(Data, "X_Y_Z_NLAYER"))
     // For X,Y,Z spherical with all layers create 3D cells in 3D space
-    create_xyz3D_grids(xCell_, yCell_, zCell_,
+    create_xyz3D_grids(Data, xCell_, yCell_, zCell_,
                        xVertex_, yVertex_, zVertex_,
                        -50000.0);
-  if (grid_is_necessary(data, "LON_LAT_1LAYER"))
+  if (grid_is_necessary(Data, "LON_LAT_1LAYER"))
     // For lon/lat cartesian with any one layer create 2D cells in 3D space
-    create_lonlat2D_grids(lonCell_, latCell_,
+    create_lonlat2D_grids(Data, lonCell_, latCell_,
                           lonVertex_, latVertex_);
-  if (grid_is_necessary(data, "LON_LAT_NLAYER"))
+  if (grid_is_necessary(Data, "LON_LAT_NLAYER"))
     // For lon/lat cartesian with all layers create #D cells in 3D space
-    create_lonlat3D_grids(lonCell_, latCell_,
+    create_lonlat3D_grids(Data, lonCell_, latCell_,
                           lonVertex_, latVertex_,
                           -0.1);
 }
@@ -203,8 +209,7 @@ static void register_data(
                       int cellDim)
 {
   vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
-      vtkCPAdaptorAPI::GetCoProcessorData()->
-                       GetInputDescriptionByName (datasetName)->GetGrid ());
+      Data->GetInputDescriptionByName (datasetName)->GetGrid ());
 
   int numLevels = *dim0;
   int numCells = *dim1;
@@ -259,12 +264,10 @@ extern "C" void coprocessor_register_data(
                                      int* dim1,
                                      double* data)
 {
-  vtkCPDataDescription *dataDesc = vtkCPAdaptorAPI::GetCoProcessorData();
-
 #define coprocessor_register_dataset(name, dim) \
   do                                            \
   {                                             \
-    if (dataDesc->GetIfGridIsNecessary(name))   \
+    if (Data->GetIfGridIsNecessary(name))   \
       register_data(fname, dim0, dim1, data,    \
         name, dim);                             \
   } while (0)
@@ -294,8 +297,7 @@ static void register_tracer_data(
                       int cellDim)
 {
   vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
-      vtkCPAdaptorAPI::GetCoProcessorData()->
-                       GetInputDescriptionByName (datasetName)->GetGrid ());
+      Data->GetInputDescriptionByName (datasetName)->GetGrid ());
 
   int varIndx = *tindex - 1;
   int numTracers = *dim0;
@@ -358,12 +360,10 @@ extern "C" void coprocessor_register_tracer_data(
                                      int* dim2,
                                      double* data)
 {
-  vtkCPDataDescription *dataDesc = vtkCPAdaptorAPI::GetCoProcessorData();
-
 #define coprocessor_register_tracer_dataset(name, dim)            \
   do                                                              \
   {                                                               \
-    if (dataDesc->GetIfGridIsNecessary(name))                     \
+    if (Data->GetIfGridIsNecessary(name))                     \
       register_tracer_data(tindex, fname, dim0, dim1, dim2, data, \
         name, dim);                                               \
   } while (0)
@@ -389,8 +389,7 @@ static void add_data(
                       int cellDim)
 {
   vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
-      vtkCPAdaptorAPI::GetCoProcessorData()->
-                       GetInputDescriptionByName (datasetName)->GetGrid ());
+      Data->GetInputDescriptionByName (datasetName)->GetGrid ());
 
   int numLevels = *dim0;
   int numCells = *dim1;
@@ -439,12 +438,10 @@ extern "C" void coprocessor_add_data(int* itime,
                                      int* dim1,
                                      double* data)
 {
-  vtkCPDataDescription *dataDesc = vtkCPAdaptorAPI::GetCoProcessorData();
-
 #define coprocessor_add_dataset(name, dim)     \
   do                                           \
   {                                            \
-    if (dataDesc->GetIfGridIsNecessary(name))  \
+    if (Data->GetIfGridIsNecessary(name))  \
       add_data(itime, fname, dim0, dim1, data, \
         name, dim);                            \
   } while (0)
@@ -472,8 +469,7 @@ static void add_tracer_data(
                       int cellDim)
 {
   vtkUnstructuredGrid* grid = vtkUnstructuredGrid::SafeDownCast(
-      vtkCPAdaptorAPI::GetCoProcessorData()->
-                       GetInputDescriptionByName (datasetName)->GetGrid ());
+      Data->GetInputDescriptionByName (datasetName)->GetGrid ());
 
   int varIndx = *tindex - 1;
   int numTracers = *dim0;
@@ -530,12 +526,10 @@ extern "C" void coprocessor_add_tracer_data(int* itime,
                                             int* dim2,
                                             double* data)
 {
-  vtkCPDataDescription *dataDesc = vtkCPAdaptorAPI::GetCoProcessorData();
-
 #define coprocessor_add_tracer_dataset(name, dim)                   \
   do                                                                \
   {                                                                 \
-    if (dataDesc->GetIfGridIsNecessary(name))                       \
+    if (Data->GetIfGridIsNecessary(name))                       \
       add_tracer_data(itime, tindex, fname, dim0, dim1, dim2, data, \
         name, dim);                                                 \
   } while (0)
@@ -548,32 +542,59 @@ extern "C" void coprocessor_add_tracer_data(int* itime,
 extern "C" void mpas_initialize()
 {
   // Initialize the adaptor.
-  vtkCPAdaptorAPI::CoProcessorInitialize();
-  vtkCPPythonAdaptorAPI::CoProcessorInitialize("mpas.py");
+  if(!Processor) {
+    Processor = vtkCPProcessor::New();
+    Processor->Initialize();
+    VTK_CREATE(vtkCPPythonScriptPipeline, pipeline);
+    pipeline->Initialize("mpas.py");
+    Processor->AddPipeline(pipeline);
 
-  vtkCPDataDescription *data = vtkCPAdaptorAPI::GetCoProcessorData();
-#define coprocessor_add_dataset(name, dim) \
-  data->AddInput(name)
-
-  check_datasets(coprocessor_add_dataset)
-
-#undef coprocessor_add_dataset
+    Data = vtkCPDataDescription::New();
+    Data->AddInput("X_Y_NLAYER-primal");
+    Data->AddInput("X_Y_NLAYER-dual");
+    Data->AddInput("X_Y_Z_1LAYER-primal");
+    Data->AddInput("X_Y_Z_1LAYER-dual");
+    Data->AddInput("X_Y_Z_NLAYER-primal");
+    Data->AddInput("X_Y_Z_NLAYER-dual");
+    Data->AddInput("LON_LAT_1LAYER-primal");
+    Data->AddInput("LON_LAT_1LAYER-dual");
+    Data->AddInput("LON_LAT_NLAYER-primal");
+    Data->AddInput("LON_LAT_NLAYER-dual");
+  }
+  else {
+    vtkGenericWarningMacro("Already initialized Catalyst");
+  }
 }
 
-extern "C" void mpas_registerdata(int *step)
+// doWork will be 0 if no pipelines need to be run
+extern "C" void mpas_check_coprocess(int* step, int* doWork)
 {
   int rstep = *step;
-  double time = rstep;
-  int ignore;
-  vtkCPAdaptorAPI::RequestDataDescription(&rstep, &time, &ignore);
+  double time = static_cast<double>(rstep);
+  Data->SetTimeData(time, rstep);
+  *doWork = Processor->RequestDataDescription(Data);
 }
 
 extern "C" void mpas_coprocess()
 {
-  vtkCPAdaptorAPI::CoProcess();
+  Processor->CoProcess(Data);
 }
 
 extern "C" void mpas_finalize()
 {
-  vtkCPAdaptorAPI::CoProcessorFinalize();
+  if(Data) {
+    Data->Delete();
+    Data = NULL;
+  }
+  else {
+    vtkGenericWarningMacro("Nothing to finalize");
+  }
+  if(Processor) {
+    Processor->Finalize();
+    Processor->Delete();
+    Processor = NULL;
+  }
+  else {
+    vtkGenericWarningMacro("Nothing to finalize");
+  }
 }

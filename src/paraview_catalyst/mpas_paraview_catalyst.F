@@ -101,8 +101,6 @@ module mpas_paraview_catalyst
         end do
       end do
 
-      call mpas_registerdata(0)
-
       print *,'COPROCESS create geometry',nCells,nVertices,maxEdges,vertexDegree,nVertLevels
       call coprocessor_create_grid( \
                        nCells, maxEdges, nGhostCell, cellGhost, cellHalo, \
@@ -181,9 +179,6 @@ module mpas_paraview_catalyst
       integer :: indexT, indexS, numTracers
       real (kind=RKIND), dimension(:,:,:), pointer :: tracers
 
-      call mpas_registerdata(itime)
-
-      print *,'COPROCESS mpas_load_data',itime
       block_ptr => domain % blocklist
 
       tracers => block_ptr % state % time_levs(2) % state % tracers % array
@@ -235,12 +230,23 @@ module mpas_paraview_catalyst
 
    end subroutine mpas_insitu_load_data!}}}
 
-   subroutine mpas_insitu_coprocess(itime)!{{{
+   subroutine mpas_insitu_coprocess(domain, itime)!{{{
 
       implicit none
 
-      integer, intent(in) :: itime
+      type (domain_type), intent(inout) :: domain
+      integer, intent(inout) :: itime
+      integer :: doWork
 
+      doWork = 0
+      print *,'checking for COPROCESS ',itime
+      call mpas_check_coprocess(itime, doWork)
+      if(doWork .eq. 0) then
+         return
+      endif
+      ! we actually need to do coprocessing
+      ! the grids should already be loaded.
+      call mpas_insitu_load_data(domain, itime)
       print *,'COPROCESS ',itime
       call mpas_coprocess
 

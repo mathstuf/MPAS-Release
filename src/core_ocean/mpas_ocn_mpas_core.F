@@ -518,8 +518,7 @@ module mpas_core
              block_ptr => block_ptr % next
          end do
 
-         call mpas_insitu_load_data(domain, itimestep)
-         call mpas_insitu_coprocess(itimestep)
+         call mpas_insitu_coprocess(domain, itimestep)
 
          block_ptr => domain % blocklist
          do while (associated(block_ptr))
