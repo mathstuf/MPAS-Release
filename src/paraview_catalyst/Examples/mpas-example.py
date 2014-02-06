@@ -17,6 +17,9 @@ datasets = {
         # the simulation. Each entry may only export a single grid, but the
         # same grid may be used multiple times in different outputs.
         'layer': 'LON_LAT_1LAYER-primal',
+        # OPTIONAL: The list of fields to use from the generated data. If
+        # empty, all fields will be used. (default is empty).
+        'fields': ['salinity', 'temperature']
 
         ########################################################################
         # Image exporting

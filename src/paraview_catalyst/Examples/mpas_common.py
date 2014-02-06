@@ -80,6 +80,10 @@ def MPASCreateCoProcessor(datasets, options={}):
                 producer = coprocessor.CreateProducer(datadescription, layer)
                 SetActiveSource(producer)
 
+                fields = dataset.get('fields', [])
+                if fields:
+                    PassArrays(CellDataArrays=fields)
+
                 if 'filters' in dataset:
                     for filter_desc in dataset['filters']:
                         args = filter_desc.get('args', [])
