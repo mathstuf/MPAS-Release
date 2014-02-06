@@ -107,10 +107,20 @@ if 'example' in datasets:
 
 coprocessor = MPASCreateCoProcessor(datasets)
 
+# To use other scripts, you may import them here:
+scripts = []
+modules = []
+for script in scripts:
+    modules.append(importlib.import_module(script))
+
 # These functions is required and is called from Catalyst without arguments.
 # Instead, pass the datasets we want to export to MPASCreateCoProcessor.
 def RequestDataDescription(datadescription):
-    return MPASRequestDataDescription(coprocessor, datadescription)
+    MPASRequestDataDescription(coprocessor, datadescription)
+    for module in modules:
+        module.RequestDataDescription(datadescription)
 
 def DoCoProcessing(datadescription):
-    return MPASDoCoProcessing(coprocessor, datadescription)
+    MPASDoCoProcessing(coprocessor, datadescription)
+    for module in modules:
+        module.DoCoProcessing(datadescription)
