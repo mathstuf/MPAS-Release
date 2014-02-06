@@ -34,39 +34,6 @@ datasets = {
         'image_pattern': 'example_%t.jpg',
 
         ########################################################################
-        # Filters
-        #-----------------------------------------------------------------------
-        # Filters can be used to modify the incoming data before writing it
-        # out. Filters are applied before *any* writers, so if the data type is
-        # modified, remember to change the writer used.
-        #-----------------------------------------------------------------------
-        # OPTIONAL: The list of filters to apply, in order.
-        'filters': [
-            {
-                ################################################################
-                # Filters may be used to modify the simulation data before
-                # writing it out. In this example, a filter to do the following:
-                #     filter = PassArrays(guiName='PassArrays1',
-                #                         CellDataArrays=['salinity'])
-                #     filter.property = 4
-                #---------------------------------------------------------------
-                # REQUIRED: A callable value which constructs a filter
-                'function': PassArrays,
-                # OPTIONAL: Positional arguments to be passed to the function.
-                'args': [],
-                # OPTIONAL: Keyword arguments to be passed to the function.
-                'kwargs': {
-                    'guiName': 'PassArrays1',
-                    'CellDataArrays': ['salinity']
-                },
-                # OPTIONAL: Properties to set on the filter.
-                'properties': {
-                    'property': 4
-                }
-            }
-        ],
-
-        ########################################################################
         # Grid exporting
         #-----------------------------------------------------------------------
         # REQUIRED: How often a grid should be written. If not provided, no
@@ -130,35 +97,7 @@ datasets = {
         'in_situ_slice_bound_range': [0, 1],
         # OPTIONAL: Undocumented (default 2).
         # TODO: Sebastian?
-        'in_situ_slice_scale_ratio': 2,
-
-        #-----------------------------------------------------------------------
-        # XXX: Needs testing.
-        # ThreeSixtyImageExporter.
-        #-----------------------------------------------------------------------
-        # REQUIRED: How often in-situ data should be written using the rotation
-        # exporter. If not provided, no rotation data will be exported.
-        'in_situ_rotate_frequency': 5,
-        # REQUIRED: The directory to export images into. It must exist prior to
-        # execution. Relative paths are interpreted from the run directory of
-        # the simulation.
-        'in_situ_rotate_dir': 'in_situ-rotate',
-        # REQUIRED: The file pattern to use when writing images. The string is
-        # formatted using Python's str.format() method. The 'phi' and 'theta'
-        # keys are required.
-        'in_situ_rotate_pattern': '{time}_{phi}_{theta}.png',
-        # OPTIONAL: Where the camera should stare (default [0, 0, 0]).
-        'in_situ_rotate_focal_point': [0, 0, 0],
-        # OPTIONAL: The distance the camera orbits around the focal point
-        # (default 100).
-        'in_situ_rotate_distance': 100,
-        # OPTIONAL: The axis around which the camera rotates.
-        'in_situ_rotate_axis': [0, 0, 1],
-        # OPTIONAL: The phi and theta steps (in degrees) the camera rotates
-        # each step (phi is the angle around the main axis and theta is the
-        # angle around the axis between the camera and the focal point)
-        # (default [10, 15]).
-        'in_situ_rotate_step': [10, 15]
+        'in_situ_slice_scale_ratio': 2
     }
 }
 
