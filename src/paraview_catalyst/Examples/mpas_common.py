@@ -34,24 +34,24 @@ DEFAULT_VIEW_PROPERTIES = {
 def MPASCreateCoProcessor(datasets, options={}):
     freqs = {}
     for (name, dataset) in datasets.items():
-        layer = dataset['layer']
+        grid = dataset['grid']
 
         # Prepare the frequency map.
-        if layer not in freqs:
-            freqs[layer] = []
+        if grid not in freqs:
+            freqs[grid] = []
 
         # Any frequencies must be known here.
         if 'image_frequency' in dataset:
-            freqs[layer].append(dataset['image_frequency'])
+            freqs[grid].append(dataset['image_frequency'])
         if 'grid_frequency' in dataset:
-            freqs[layer].append(dataset['grid_frequency'])
-        if 'in_situ_frequency' in dataset:
-            freqs[layer].append(dataset['in_situ_frequency'])
+            freqs[grid].append(dataset['grid_frequency'])
+        if 'web_view_frequency' in dataset:
+            freqs[grid].append(dataset['web_view_frequency'])
 
     def mpas_create_pipeline(coprocessor, datadescription):
         class MPASPipeline(object):
             for (name, dataset) in datasets.items():
-                layer = dataset['layer']
+                grid = dataset['grid']
 
                 image_pattern = dataset.get('image_pattern', '%s_%%t.png' % name)
                 # Use pi if no images are wanted since it will never have a
@@ -77,7 +77,7 @@ def MPASCreateCoProcessor(datasets, options={}):
                 for (k, v) in view_props.items():
                     setattr(view, k, v)
 
-                producer = coprocessor.CreateProducer(datadescription, layer)
+                producer = coprocessor.CreateProducer(datadescription, grid)
                 SetActiveSource(producer)
 
                 fields = dataset.get('fields', [])
