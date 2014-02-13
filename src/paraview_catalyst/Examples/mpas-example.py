@@ -1,6 +1,12 @@
 try: paraview.simple
 except: from paraview.simple import *
 
+################################################################################
+# To use this file, copy it to a file named 'mpas.py' in the directory where
+# the simulation will be run. Also copy or symlink 'mpas_common.py' beside it.
+# Then edit the 'datasets' dictionary according to its comments.
+################################################################################
+
 from mpas_common import *
 
 # A dictionary of datasets to export is used to determine what is wanted when
@@ -24,7 +30,8 @@ datasets = {
         # same grid may be used multiple times in different outputs.
         'grid': 'LON_LAT_1LAYER-primal',
         # OPTIONAL: The list of fields to use from the generated data. If
-        # empty, all fields will be used. (default is empty).
+        # empty, all fields will be used. (default is empty). These are case
+        # sensitive.
         'fields': ['salinity', 'temperature']
 
         ########################################################################
