@@ -28,27 +28,11 @@ datasets = {
         'fields': ['salinity', 'temperature']
 
         ########################################################################
-        # Image exporting
-        #-----------------------------------------------------------------------
-        # REQUIRED: How often an image should be written. If not provided, no
-        # images will be created.
-        'image_frequency': 5,
-        # OPTIONAL: The filename pattern to use when writing images. Use '%t'
-        # to use the timestep of the image. The file format is automatically
-        # determined from the file extension. The default is 'NAME_%t.png'
-        # where NAME is the key of the output (the key in 'datasets').
-        'image_pattern': 'example_%t.jpg',
-
-        ########################################################################
         # Grid exporting
         #-----------------------------------------------------------------------
         # REQUIRED: How often a grid should be written. If not provided, no
         # grids will be created.
         'grid_frequency': 5,
-        # OPTIONAL: The writer class to use when writing out the grid. The
-        # default is to use an XMLPUnstructuredGridWriter since all MPAS
-        # outputs are unstructured grids.
-        'grid_class': XMLPUnstructuredGridWriter,
         # OPTIONAL: The filename pattern to use when writing grid files. Use
         # '%t' to use the timestep of the grid. The default is 'NAME_%t.pvtu'
         # where NAME is the key of the output (the key in 'datasets').
