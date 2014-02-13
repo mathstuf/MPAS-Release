@@ -94,35 +94,35 @@ def MPASCreateCoProcessor(datasets, options={}):
                                 setattr(filt, k, v)
 
                 # Support for in-situ image exporting
-                if 'in_situ_slice_frequency' in dataset:
+                if 'web_view_slice_frequency' in dataset:
                     def slice_wrapper(view, producer, dataset):
                         def create_slice_explorer():
-                            file_generator = wx.FileNameGenerator(dataset['in_situ_slice_dir'], dataset['in_situ_slice_pattern'])
+                            file_generator = wx.FileNameGenerator(dataset['web_view_slice_dir'], dataset['web_view_slice_pattern'])
                             return wx.SliceExplorer(file_generator, view, producer,
-                                    dataset['in_situ_slice_colors'],
-                                    dataset.get('in_situ_slice_slices', 10),
-                                    dataset.get('in_situ_slice_normal', [0, 0, 1]),
-                                    dataset.get('in_situ_slice_viewup', [0, 1, 0]),
-                                    dataset.get('in_situ_slice_bound_range', [0, 1]),
-                                    dataset.get('in_situ_slice_scale_ratio', 2))
+                                    dataset['web_view_slice_colors'],
+                                    dataset.get('web_view_slice_slices', 10),
+                                    dataset.get('web_view_slice_normal', [0, 0, 1]),
+                                    dataset.get('web_view_slice_viewup', [0, 1, 0]),
+                                    dataset.get('web_view_slice_bound_range', [0, 1]),
+                                    dataset.get('web_view_slice_scale_ratio', 2))
                         return create_slice_explorer
-                    in_situ_exporter = coprocessor.CreateWriter(slice_wrapper(view, producer, dataset),
-                            '', dataset['in_situ_slice_frequency'])
+                    web_view_exporter = coprocessor.CreateWriter(slice_wrapper(view, producer, dataset),
+                            '', dataset['web_view_slice_frequency'])
 
                 # Support for in-situ image exporting
                 # XXX: Disabled for now. Will this work?
-                if False and 'in_situ_rotate_frequency' in dataset:
+                if False and 'web_view_rotate_frequency' in dataset:
                     def rotate_wrapper(view, producer, dataset):
                         def create_rotate_explorer():
-                            file_generator = wx.FileNameGenerator(dataset['in_situ_rotate_dir'], dataset['in_situ_rotate_pattern'])
+                            file_generator = wx.FileNameGenerator(dataset['web_view_rotate_dir'], dataset['web_view_rotate_pattern'])
                             return wx.ThreeSixtyImageExporter(file_generator, view,
-                                    dataset.get('in_situ_rotate_focal_point', [0, 0, 0]),
-                                    dataset.get('in_situ_rotate_distance', 100),
-                                    dataset.get('in_situ_rotate_axis', [0, 0, 1]),
-                                    dataset.get('in_situ_rotate_step', [10, 15]))
+                                    dataset.get('web_view_rotate_focal_point', [0, 0, 0]),
+                                    dataset.get('web_view_rotate_distance', 100),
+                                    dataset.get('web_view_rotate_axis', [0, 0, 1]),
+                                    dataset.get('web_view_rotate_step', [10, 15]))
                         return create_rotate_explorer
-                    in_situ_exporter = coprocessor.CreateWriter(rotate_wrapper(view, producer, dataset),
-                            '', dataset['in_situ_rotate_frequency'])
+                    web_view_exporter = coprocessor.CreateWriter(rotate_wrapper(view, producer, dataset),
+                            '', dataset['web_view_rotate_frequency'])
 
                 if 'grid_frequency' in dataset:
                     grid_class = dataset.get('grid_class', XMLPUnstructuredGridWriter)
