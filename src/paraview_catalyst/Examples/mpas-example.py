@@ -9,7 +9,13 @@ from mpas_common import *
 datasets = {
     # This is the name associated with the output. It is used in the default
     # filename patterns if another name is not given.
-    'example': {
+    'EXAMPLE': {
+        ########################################################################
+        # This entry is an example only and will be removed if it not the
+        # only one in the map so that it may be used as a reference.
+        # Renaming it will also preserve it.
+        ########################################################################
+
         ########################################################################
         # Core information
         #-----------------------------------------------------------------------
@@ -102,8 +108,8 @@ datasets = {
 }
 
 # Remove the example from the datasets in case it is wanted for documentation.
-if 'example' in datasets:
-    del datasets['example']
+if len(datasets) > 1 and 'EXAMPLE' in datasets:
+    del datasets['EXAMPLE']
 
 coprocessor = MPASCreateCoProcessor(datasets)
 
