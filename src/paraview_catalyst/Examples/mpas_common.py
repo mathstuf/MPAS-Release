@@ -141,7 +141,7 @@ def MPASCreateCoProcessor(datasets, options={}):
     coprocessor.SetUpdateFrequencies(freqs)
 
     # Enable Live-Visualizaton with ParaView
-    coprocessor.EnableLiveVisualization(False)
+    coprocessor.EnableLiveVisualization(False, 1)
 
     return coprocessor
 
