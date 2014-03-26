@@ -30,7 +30,7 @@ datasets = {
         # same grid may be used multiple times in different outputs.
         'grid': 'LON_LAT_1LAYER-primal',
         # OPTIONAL: The list of fields to use from the generated data. If
-        # empty, all fields will be used. (default is empty). These are case
+        # empty, all fields will be used (default is empty). These are case
         # sensitive.
         'fields': ['salinity', 'temperature'],
 
