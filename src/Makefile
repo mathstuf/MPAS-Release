@@ -44,9 +44,13 @@ ops: $(AUTOCLEAN_DEPS) reg_includes externals frame
 	( cd operators; $(MAKE) CPPFLAGS="$(CPPFLAGS)" CPPINCLUDES="$(CPPINCLUDES)" all ) 
 	ln -sf operators/libops.a libops.a
 
-dycore: $(AUTOCLEAN_DEPS) reg_includes externals frame ops paraview
+dycore: $(AUTOCLEAN_DEPS) reg_includes externals frame ops
 	( cd core_$(CORE); $(MAKE) CPPFLAGS="$(CPPFLAGS)" CPPINCLUDES="$(CPPINCLUDES)" all ) 
 	ln -sf core_$(CORE)/libdycore.a libdycore.a
+# Depend on paraview if it's available.
+ifeq "$(USE_PARAVIEW)" "true"
+dycore: paraview
+endif
 
 
 clean: clean_shared clean_core

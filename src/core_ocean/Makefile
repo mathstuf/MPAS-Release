@@ -1,3 +1,7 @@
+ifneq "$(USE_PARAVIEW)" "true"
+$(error "The ocean core requires ParaView")
+endif
+
 .SUFFIXES: .F .o
 
 CVMIX_REPO_ADDRESS=http://cvmix.googlecode.com/svn/trunk/src/shared
