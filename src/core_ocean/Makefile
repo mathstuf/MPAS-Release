@@ -1,7 +1,3 @@
-ifneq "$(USE_PARAVIEW)" "true"
-$(error "The ocean core requires ParaView")
-endif
-
 .SUFFIXES: .F .o
 
 CVMIX_REPO_ADDRESS=http://cvmix.googlecode.com/svn/trunk/src/shared
@@ -208,11 +204,15 @@ clean:
 	fi
 	$(RM) *.o *.mod *.f90 libdycore.a
 
+ifeq "$(USE_PARAVIEW)" "true"
+PARAVIEW_FLAGS := -I../paraview_catalyst
+endif
+
 .F.o:
 	$(RM) $@ $*.mod
 ifeq "$(GEN_F90)" "true"
 	$(CPP) $(CPPFLAGS) $(CPPINCLUDES) $< > $*.f90
-	$(FC) $(FFLAGS) -c $*.f90 $(FCINCLUDES) -I../framework -I../operators -I../external/esmf_time_f90 -I./cvmix -I../paraview_catalyst
+	$(FC) $(FFLAGS) -c $*.f90 $(FCINCLUDES) -I../framework -I../operators -I../external/esmf_time_f90 -I./cvmix $(PARAVIEW_FLAGS)
 else
-	$(FC) $(CPPFLAGS) $(FFLAGS) -c $*.F $(CPPINCLUDES) $(FCINCLUDES) -I../framework -I../operators -I../external/esmf_time_f90 -I./cvmix -I../paraview_catalyst
+	$(FC) $(CPPFLAGS) $(FFLAGS) -c $*.F $(CPPINCLUDES) $(FCINCLUDES) -I../framework -I../operators -I../external/esmf_time_f90 -I./cvmix $(PARAVIEW_FLAGS)
 endif

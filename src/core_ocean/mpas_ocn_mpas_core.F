@@ -93,7 +93,9 @@ module mpas_core
 
       use mpas_grid_types
       use ocn_tracer_advection
+#ifdef USE_PARAVIEW
       use mpas_paraview_catalyst
+#endif
 
       implicit none
 
@@ -251,7 +253,9 @@ module mpas_core
       !
       ! Initialize insitu coprocessing
       !
+#ifdef USE_PARAVIEW
       call mpas_insitu_initialize
+#endif
 
    end subroutine mpas_core_init!}}}
 
@@ -443,7 +447,9 @@ module mpas_core
       use mpas_kind_types
       use mpas_grid_types
       use mpas_io_output
+#ifdef USE_PARAVIEW
       use mpas_paraview_catalyst
+#endif
       use mpas_timer
    
       implicit none
@@ -472,7 +478,9 @@ module mpas_core
       endif
       block_ptr => domain % blocklist
 
+#ifdef USE_PARAVIEW
       call mpas_insitu_create_geometry(domain)
+#endif
 
       do while(associated(block_ptr))
         call ocn_time_average_init(block_ptr % average)
@@ -518,7 +526,9 @@ module mpas_core
              block_ptr => block_ptr % next
          end do
 
+#ifdef USE_PARAVIEW
          call mpas_insitu_coprocess(domain, itimestep)
+#endif
 
          block_ptr => domain % blocklist
          do while (associated(block_ptr))
@@ -1156,7 +1166,9 @@ end subroutine ocn_compute_max_level!}}}
    subroutine mpas_core_finalize(domain)!{{{
    
       use mpas_grid_types
+#ifdef USE_PARAVIEW
       use mpas_paraview_catalyst
+#endif
    
       implicit none
 
@@ -1168,7 +1180,9 @@ end subroutine ocn_compute_max_level!}}}
       !
       ! Finalize insitu coprocessing
       !
+#ifdef USE_PARAVIEW
       call mpas_insitu_finalize
+#endif
 
    end subroutine mpas_core_finalize!}}}
 
