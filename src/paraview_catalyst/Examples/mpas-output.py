@@ -14,8 +14,14 @@ datasets = {
         'grid': 'LON_LAT_1LAYER-primal',
         #'fields': ['salinity', 'temperature'],
 
-        'grid_frequency': 5,
-        'grid_pattern': 'example_lonlat1_%t.pvtu'
+        'writers': [
+            {
+                'source': 'simulation',
+                'function': XMLUnstructuredGridWriter,
+                'pattern': 'example_lonlat1_%t.pvtu',
+                'frequency': 5
+            }
+        ]
     }
 }
 

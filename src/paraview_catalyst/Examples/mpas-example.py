@@ -35,66 +35,55 @@ datasets = {
         'fields': ['salinity', 'temperature'],
 
         ########################################################################
-        # Grid exporting
+        # Filters
         #-----------------------------------------------------------------------
-        # REQUIRED: How often a grid should be written. If not provided, no
-        # grids will be created.
-        'grid_frequency': 5,
-        # OPTIONAL: The filename pattern to use when writing grid files. Use
-        # '%t' to use the timestep of the grid. The default is 'NAME_%t.pvtu'
-        # where NAME is the key of the output (the key in 'datasets').
-        'grid_pattern': 'example_lonlat1_%t.pvtu',
+        # Filters may be used to transform data and as input for writers or
+        # other filters.
+        'filters': [
+            {
+                # The source to use for this filter. The top-level source is
+                # named "simulation". It is recommended to be explicit and
+                # always specify the source.
+                'source': 'simulation',
+                # The name of the filter. This may be used as a 'source' for
+                # other filters and writers.
+                'name': 'myfilter',
+                # If True, the filter will be rendered in the window. This is
+                # useful for filling the background or loading a base model to
+                # render on top of.
+                'show': True,
+                # The constructor for the filter. A VTK class will typically be
+                # given here.
+                'function': LegacyVTKReader,
+                # Any keyword arguments which must be passed to the constructor.
+                'kwargs': {
+                    'FileNames': ['my_base_model.vtk']
+                }
+            }
+        ],
 
         ########################################################################
-        # In-situ exporting
+        # Writers
         #-----------------------------------------------------------------------
-        # These options will configure how images for use in the in-situ web
-        # viewer will be exported.
-        #-----------------------------------------------------------------------
-        # REQUIRED: How often in-situ data should be written using the slice
-        # exporter. If not provided, no slice data will be exported.
-        'web_view_slice_frequency': 5,
-        # REQUIRED: The directory to export images into. It must exist prior to
-        # execution. Relative paths are interpreted from the run directory of
-        # the simulation.
-        'web_view_slice_dir': 'web_view-slice',
-        # REQUIRED: The file pattern to use when writing images. The string is
-        # formatted using Python's str.format() method. The 'sliceColor' and
-        # 'slicePosition' keys are required.
-        'web_view_slice_pattern': '{time}_{sliceColor}_{slicePosition}.png',
-        # REQUIRED: The colors to use when rendering images.
-        # TODO: Have Sebastion document these fields.
-        'web_view_slice_colors': {
-            # The name of the lookup table entry.
-            'temperature': {
-                'lut': GetLookupTableForArray(
-                        # The name of the array.
-                        'temperature',
-                        # The number of components.
-                        1,
-                        # TODO: Have Sebastion document these fields.
-                        RGBPoints=[0, 0.0, 0.0, 1.0, 28.658824920654297, 1.0, 0.0, 0.0],
-                        VectorMode='Magnitude',
-                        NanColor=[0.498039, 0.498039, 0.498039],
-                        ColorSpace='HSV',
-                        ScalarRangeInitialized=1.0),
-                "type": 'CELL_DATA'
+        # These are added as writers and updated as necessary. Multiple writers
+        # may be used. There must be at least one writer.
+        'writers': [
+            {
+                # The source to use for this writer. The top-level source is
+                # named "simulation". It is recommended to be explicit and
+                # always specify the source.
+                'source': 'simulation',
+                # The function to construct an instance of the writer class.
+                # A VTK class will typically be given here.
+                'function': XMLUnstructuredGridWriter,
+                # The filename pattern to use when writing grid files. Use '%t'
+                # to use the timestep of the grid.
+                'pattern': 'example_lonlat1_%t.pvtu',
+                # How often to use this writer.
+                'frequency': 5
             }
-        },
-        # OPTIONAL: The number of slices to export (default 10).
-        'web_view_slice_slices': 30,
-        # OPTIONAL: The normal vector for the slice plane (default [0, 0, 1]).
-        # TODO: Sebastian?
-        'web_view_slice_normal': [0, 0, 1],
-        # OPTIONAL: The up vector for the camera (default [0, 1, 0]).
-        # TODO: Sebastian?
-        'web_view_slice_viewup': [0, 1, 0],
-        # OPTIONAL: The bounds range for the data (default [0, 1]).
-        # TODO: Sebastian?
-        'web_view_slice_bound_range': [0, 1],
-        # OPTIONAL: Undocumented (default 2).
-        # TODO: Sebastian?
-        'web_view_slice_scale_ratio': 2
+            # Further writers may go here.
+        ]
     }
 }
 
