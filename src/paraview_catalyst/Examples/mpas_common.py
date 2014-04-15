@@ -43,10 +43,8 @@ def MPASCreateCoProcessor(datasets, options={}):
         # Any frequencies must be known here.
         if 'image_frequency' in dataset:
             freqs[grid].append(dataset['image_frequency'])
-        if 'grid_frequency' in dataset:
-            freqs[grid].append(dataset['grid_frequency'])
-        if 'web_view_frequency' in dataset:
-            freqs[grid].append(dataset['web_view_frequency'])
+        for writer in dataset['writers']:
+            freqs[grid].append(writer['frequency'])
 
     def mpas_create_pipeline(coprocessor, datadescription):
         class MPASPipeline(object):
@@ -77,59 +75,50 @@ def MPASCreateCoProcessor(datasets, options={}):
                 for (k, v) in view_props.items():
                     setattr(view, k, v)
 
+                filters = {}
                 producer = coprocessor.CreateProducer(datadescription, grid)
                 SetActiveSource(producer)
+                filters['simulation'] = producer
 
                 fields = dataset.get('fields', [])
                 if fields:
-                    PassArrays(CellDataArrays=fields)
+                    filters['simulation_orig'] = producer
+                    filters['simulation'] = PassArrays(CellDataArrays=fields)
 
                 if 'filters' in dataset:
                     for filter_desc in dataset['filters']:
                         args = filter_desc.get('args', [])
                         kwargs = filter_desc.get('kwargs', {})
                         filt = filter_desc['function'](*args, **kwargs)
+                        if 'source' in filter_desc:
+                            source = filter_desc['source']
+                            if source in filters:
+                                SetActiveSource(filters[source])
+                            else:
+                                raise RuntimeError('Unknown source for filter: %s' % source)
+                        if 'name' in filter_desc:
+                            filters[filter_desc['name']] = filt
+                        if 'show' in filter_desc:
+                            if filter_desc['show']:
+                                Show(filt)
+                            else:
+                                Hide(filt)
                         if 'properties' in filter_desc:
                             for (k, v) in filter_desc['properties'].items():
                                 setattr(filt, k, v)
 
-                # Support for in-situ image exporting
-                if 'web_view_slice_frequency' in dataset:
-                    def slice_wrapper(view, producer, dataset):
-                        def create_slice_explorer():
-                            file_generator = wx.FileNameGenerator(dataset['web_view_slice_dir'], dataset['web_view_slice_pattern'])
-                            return wx.SliceExplorer(file_generator, view, producer,
-                                    dataset['web_view_slice_colors'],
-                                    dataset.get('web_view_slice_slices', 10),
-                                    dataset.get('web_view_slice_normal', [0, 0, 1]),
-                                    dataset.get('web_view_slice_viewup', [0, 1, 0]),
-                                    dataset.get('web_view_slice_bound_range', [0, 1]),
-                                    dataset.get('web_view_slice_scale_ratio', 2))
-                        return create_slice_explorer
-                    web_view_exporter = coprocessor.CreateWriter(slice_wrapper(view, producer, dataset),
-                            '', dataset['web_view_slice_frequency'])
-
-                # Support for in-situ image exporting
-                # XXX: Disabled for now. Will this work?
-                if False and 'web_view_rotate_frequency' in dataset:
-                    def rotate_wrapper(view, producer, dataset):
-                        def create_rotate_explorer():
-                            file_generator = wx.FileNameGenerator(dataset['web_view_rotate_dir'], dataset['web_view_rotate_pattern'])
-                            return wx.ThreeSixtyImageExporter(file_generator, view,
-                                    dataset.get('web_view_rotate_focal_point', [0, 0, 0]),
-                                    dataset.get('web_view_rotate_distance', 100),
-                                    dataset.get('web_view_rotate_axis', [0, 0, 1]),
-                                    dataset.get('web_view_rotate_step', [10, 15]))
-                        return create_rotate_explorer
-                    web_view_exporter = coprocessor.CreateWriter(rotate_wrapper(view, producer, dataset),
-                            '', dataset['web_view_rotate_frequency'])
-
-                if 'grid_frequency' in dataset:
-                    grid_class = dataset.get('grid_class', XMLPUnstructuredGridWriter)
-                    grid_pattern = dataset.get('grid_pattern', '%s_%%t.pvtu' % name)
-                    grid_frequency = dataset['grid_frequency']
-
-                    coprocessor.CreateWriter(grid_class, grid_pattern, grid_frequency)
+                for writer in dataset['writers']:
+                    if 'source' in writer:
+                        source = writer['source']
+                        if source in filters:
+                            SetActiveSource(filters[source])
+                        else:
+                            raise RuntimeError('Unknown source for web view: %s' % source)
+                    pattern = writer.get('pattern', '')
+                    writer_obj = coprocessor.CreateWriter(writer['function'], pattern, writer['frequency'])
+                    if 'properties' in writer:
+                        for (k, v) in writer['properties'].items():
+                            setattr(writer_obj, k, v)
 
         return MPASPipeline()
 
