@@ -2,7 +2,10 @@ try: paraview.simple
 except: from paraview.simple import *
 
 from paraview import coprocessing
-from paraview import data_exploration as wx
+try:
+  from paraview import data_exploration as wx
+except:
+  wx = None
 
 #--------------------------------------------------------------
 # Code generated from cpstate.py to create the CoProcessor.
@@ -93,13 +96,14 @@ def CreateCoProcessor():
       # Take an image of the dataset.
       mpas_ocean_00 = coprocessor.CreateProducer( datadescription, dataset )
 
-      fileGenerator = wx.FileNameGenerator('slices', '{time}_{sliceColor}_{slicePosition}.png')
-      def mkproxy(filegen, view, data):
-        def sliceFactory():
-          return wx.SliceExplorer(filegen, view, data, colorByArray, nslices, [0, 0, 1], [0, 1, 0], [0.2, 0.99], 2)
-        return sliceFactory
-      # Writes slice files for web viewing.
-      sliceExplorer = coprocessor.CreateWriter(mkproxy(fileGenerator, RenderView1, mpas_ocean_00), '', grid_freq)
+      if wx is not None:
+        fileGenerator = wx.FileNameGenerator('slices', '{time}_{sliceColor}_{slicePosition}.png')
+        def mkproxy(filegen, view, data):
+          def sliceFactory():
+            return wx.SliceExplorer(filegen, view, data, colorByArray, nslices, [0, 0, 1], [0, 1, 0], [0.2, 0.99], 2)
+          return sliceFactory
+        # Writes slice files for web viewing.
+        sliceExplorer = coprocessor.CreateWriter(mkproxy(fileGenerator, RenderView1, mpas_ocean_00), '', grid_freq)
 
       # Writes .pvtu files for viewing in ParaView.
       SetActiveSource(mpas_ocean_00)
