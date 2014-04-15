@@ -221,7 +221,7 @@ static void register_data(
 
   vtkStdString name(fname);
   string::size_type pos = name.find(' ');
-  vtkStdString varName = name.substr(0, pos); 
+  vtkStdString varName = name.substr(0, pos);
   vtkFloatArray* arr = vtkFloatArray::New();
   arr->SetName(varName.c_str());
   grid->GetCellData()->AddArray(arr);
@@ -267,7 +267,7 @@ extern "C" void coprocessor_register_data(
 #define coprocessor_register_dataset(name, dim) \
   do                                            \
   {                                             \
-    if (Data->GetIfGridIsNecessary(name))   \
+    if (Data->GetIfGridIsNecessary(name))       \
       register_data(fname, dim0, dim1, data,    \
         name, dim);                             \
   } while (0)
@@ -314,7 +314,7 @@ static void register_tracer_data(
 
   vtkStdString name(fname);
   string::size_type pos = name.find(' ');
-  vtkStdString varName = name.substr(0, pos); 
+  vtkStdString varName = name.substr(0, pos);
   vtkFloatArray* arr = vtkFloatArray::New();
   arr->SetName(varName.c_str());
   grid->GetCellData()->AddArray(arr);
@@ -363,7 +363,7 @@ extern "C" void coprocessor_register_tracer_data(
 #define coprocessor_register_tracer_dataset(name, dim)            \
   do                                                              \
   {                                                               \
-    if (Data->GetIfGridIsNecessary(name))                     \
+    if (Data->GetIfGridIsNecessary(name))                         \
       register_tracer_data(tindex, fname, dim0, dim1, dim2, data, \
         name, dim);                                               \
   } while (0)
@@ -401,7 +401,7 @@ static void add_data(
 
   vtkStdString name(fname);
   string::size_type pos = name.find(' ');
-  vtkStdString varName = name.substr(0, pos); 
+  vtkStdString varName = name.substr(0, pos);
   vtkFloatArray* arr =  vtkFloatArray::SafeDownCast(
         grid->GetCellData()->GetArray(varName.c_str()));
   float* ptr = arr->GetPointer(0);
@@ -441,7 +441,7 @@ extern "C" void coprocessor_add_data(int* itime,
 #define coprocessor_add_dataset(name, dim)     \
   do                                           \
   {                                            \
-    if (Data->GetIfGridIsNecessary(name))  \
+    if (Data->GetIfGridIsNecessary(name))      \
       add_data(itime, fname, dim0, dim1, data, \
         name, dim);                            \
   } while (0)
@@ -486,7 +486,7 @@ static void add_tracer_data(
 
   vtkStdString name(fname);
   string::size_type pos = name.find(' ');
-  vtkStdString varName = name.substr(0, pos); 
+  vtkStdString varName = name.substr(0, pos);
   vtkFloatArray* arr =  vtkFloatArray::SafeDownCast(
         grid->GetCellData()->GetArray(varName.c_str()));
   float* ptr = arr->GetPointer(0);
@@ -529,7 +529,7 @@ extern "C" void coprocessor_add_tracer_data(int* itime,
 #define coprocessor_add_tracer_dataset(name, dim)                   \
   do                                                                \
   {                                                                 \
-    if (Data->GetIfGridIsNecessary(name))                       \
+    if (Data->GetIfGridIsNecessary(name))                           \
       add_tracer_data(itime, tindex, fname, dim0, dim1, dim2, data, \
         name, dim);                                                 \
   } while (0)
