@@ -3,14 +3,6 @@ except: from paraview.simple import *
 
 from paraview import coprocessing
 
-import math
-
-DEFAULT_VIEW_OPTIONS = {
-    'fit_to_screen': 1,
-    'magnification': 1.0,
-    'width': 500,
-    'height': 500,
-}
 DEFAULT_VIEW_PROPERTIES = {
     'CacheKey': 0.0,
     'StereoType': 0,
@@ -25,7 +17,7 @@ DEFAULT_VIEW_PROPERTIES = {
     'CameraFocalPoint': [15000.0, 99592.9248046875, -200000.0],
     'CameraParallelScale': 219435.83080920158,
     'CenterOfRotation': [15000.0, 99592.9248046875, -200000.0],
-    'ViewSize': [1000, 500],
+    'ViewSize': [500, 500],
     'OrientationAxesVisibility': 0,
     'CenterAxesVisibility': 0
 }
@@ -40,8 +32,6 @@ def MPASCreateCoProcessor(datasets, options={}):
             freqs[grid] = []
 
         # Any frequencies must be known here.
-        if 'image_frequency' in dataset:
-            freqs[grid].append(dataset['image_frequency'])
         for writer in dataset['writers']:
             freqs[grid].append(writer['frequency'])
 
@@ -50,26 +40,11 @@ def MPASCreateCoProcessor(datasets, options={}):
             for dataset in datasets:
                 grid = dataset['grid']
 
-                # Use pi if no images are wanted since it will never have a
-                # zero modulo with an integer. Using zero causes
-                # ZeroDivisionError exceptions in coprocessing.
-                image_frequency = dataset.get('image_frequency', math.pi)
-
-                view_options = DEFAULT_VIEW_OPTIONS.copy()
-                if 'view' in options:
-                    view_options.update(options['view'])
-
                 view_props = DEFAULT_VIEW_PROPERTIES.copy()
                 if 'view_properties' in options:
                     view_props.update(options['view_properties'])
 
-                view = coprocessor.CreateView(CreateRenderView,
-                        dataset['image_pattern'],
-                        image_frequency,
-                        view_options['fit_to_screen'],
-                        view_options['magnification'],
-                        view_options['width'],
-                        view_options['height'])
+                view = CreateRenderView()
                 for (k, v) in view_props.items():
                     setattr(view, k, v)
 
