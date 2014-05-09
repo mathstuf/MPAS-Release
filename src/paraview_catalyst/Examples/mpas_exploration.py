@@ -347,6 +347,8 @@ def mpas_add_pipeline(datasets, desc, **kwargs):
         pipe['fields'] = desc['fields']
 
     opts = desc['configuration']
+    # Copy frequency down.
+    opts['frequency'] = desc['frequency']
 
     if 'view_properties' in opts:
         pipe['view_properties'] = opts['view_properties']

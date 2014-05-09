@@ -8,18 +8,18 @@ mpas_add_pipeline(datasets, {
     'grid': 'X_Y_Z_1LAYER-primal',
     'exporter': 'grid',
     'fields': [], # empty list == all fields
+    'frequency': 5,
     'configuration': {
-        'frequency': 5,
         'pattern': 'xyz1layer_%t.pvtu'
     }
 })
 
 mpas_add_pipeline(datasets, {
     'grid': 'X_Y_Z_NLAYER-dual',
-    'fields': ('temperature', 'salinity')
     'exporter': 'isolines',
+    'fields': ('temperature', 'salinity')
+    'frequency': 5,
     'configuration': {
-        'frequency': 5,
         'view_properties': {
             'ViewSize': (500, 500)
         },
