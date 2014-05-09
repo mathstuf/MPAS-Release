@@ -304,21 +304,12 @@ def buildLookupTables(luts):
     return luts
 
 
-def mpas_earth_core(path, reader=LegacyVTKReader):
-    return {
-        'name': 'earth',
-        'function': reader,
-        'show': True,
-        'kwargs': {
-            'FileNames': [path]
-        }
-    }
-
 def writers(name, opts):
     clsmap = {
         'contour3d': Contour3dWriter,
         'colorby3d': ColorBy3dWriter,
-        'isolines3d': IsoLines3dWriter
+        'isolines3d': IsoLines3dWriter,
+        'grid': XMLUnstructuredGridWriter
     }
 
     def pipeline_element():
@@ -327,50 +318,49 @@ def writers(name, opts):
             return cls(opts)
         return cls()
 
-    return pipeline_element
+    writer = {
+        'source': 'simulation',
+        'function': pipeline_element,
+        'frequency': opts.get('frequency', 5)
+        'properties': {}
+    }
+
+    if 'pattern' in opts:
+        writer['pattern'] = opts['pattern']
+
+    if 'contour_arrays' in opts:
+        writer['properties']['luts'] = buildLookupTables(opts['contour_arrays'])
+
+    return writer
 
 def mpas_add_pipeline(datasets, desc, **kwargs):
-    sim = kwargs.copy()
+    pipe = kwargs.copy()
 
-    if 'view' not in sim:
-        sim['view'] = {}
-    if 'filters' not in sim:
-        sim['filters'] = []
-    if 'writers' not in sim:
-        sim['writers'] = []
+    if 'filters' not in pipe:
+        pipe['filters'] = []
+    if 'writers' not in pipe:
+        pipe['writers'] = []
 
     # Grid setup
-    sim['grid'] = desc['grid']
-    sim['image_pattern'] = desc['image_pattern']
-    sim['fields'] = desc['fields']
+    pipe['grid'] = desc['grid']
+    if 'fields' in desc:
+        pipe['fields'] = desc['fields']
 
-    if 'view_size' in desc:
-        size = desc['view_size']
-        sim['view']['width'] = size[0]
-        sim['view']['height'] = size[1]
+    opts = desc['configuration']
 
-    if 'earth_core' in desc:
-        sim['filters'].append(desc['earth_core'])
+    if 'view_properties' in opts:
+        pipe['view_properties'] = opts['view_properties']
 
-    if desc.get('write_grid', False):
-        sim['writers'].append({
-            'source': 'simulation',
-            'function', XMLUnstructuredGridWriter,
-            'pattern': desc.get('grid_pattern', '%(grid)s/%(grid)s_%%t.pvtu' % sim),
-            'frequency': desc.get('grid_frequency', 5)
-        })
-
-    if 'explorer' in desc:
-        explorer = desc['explorer']
-        luts = desc['explorer_contours']
-        explorer_luts = buildLookupTables(luts)
-        sim['writers'].append({
-            'source': 'simulation',
-            'function': writers(simulation, desc.get(desc.get('explorer_options', {}))),
-            'frequency', desc.get('explorer_frequency', 5)
-            'properties': {
-                'luts', explorer_luts
+    if 'earth_core' in opts:
+        pipe['filters'].append({
+            'name': 'earth',
+            'function': LegacyVTKReader,
+            'show': True,
+            'kwargs': {
+                'FileNames': [opts['earth_core']]
             }
         })
 
-    datasets.append(sim)
+    pipe['writers'].append(writers(desc['exporter'], desc['configuration']))
+
+    datasets.append(pipe)

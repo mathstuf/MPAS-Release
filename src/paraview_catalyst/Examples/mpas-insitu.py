@@ -4,47 +4,47 @@ from mpas_exploration import *
 
 datasets = []
 
-earth_core_mesh = mpas_earth_core('/.../earth-core-smooth-no-data.vtk')
-
 mpas_add_pipeline(datasets, {
     'grid': 'X_Y_Z_1LAYER-primal',
-    'fields': ('salinity', 'temperature')
-
-    'image_pattern': 'xyz1_%t.jpg',
-    'grid_pattern': 'my_grid_%t.pvtu',
-    'write_grid': True,
-    'grid_frequency': 5,
-
-    'view_size': (500, 500),
-
-    # Available: countour3d, colorBy3d, isolines3d
-    'explorer': 'isolines',
-    'explorer_frequency': 5,
-    'explorer_contours': {
-        'temperature': {
-            'range': [-1.6428141593933105, 28.691740036010742],
-            'nlines': 30,
-            'nsurfaces': 10,
-            'colorBy': ('POINT_DATA', 'temperature'),
-            'colors': 'red_to_blue',
-
-            # Information for the isolines explorer.
-            'isoLinesArray': 'salinity'
-        },
-        'salinity': {
-            'range': [33.391498565673828, 36.110965728759766],
-            'nlines': 30,
-            'nsurfaces': 10,
-            'colorBy': ('POINT_DATA', 'salinity'),
-            'colors': 'rainbow',
-
-            # Information for the isolines explorer.
-            'isoLinesArray': 'temperature'
-        }
+    'exporter': 'grid',
+    'fields': [], # empty list == all fields
+    'configuration': {
+        'frequency': 5,
+        'pattern': 'xyz1layer_%t.pvtu'
     }
+})
 
-    # Explorer-specific options.
-    'explorer_options': {
+mpas_add_pipeline(datasets, {
+    'grid': 'X_Y_Z_NLAYER-dual',
+    'fields': ('temperature', 'salinity')
+    'exporter': 'isolines',
+    'configuration': {
+        'frequency': 5,
+        'view_properties': {
+            'ViewSize': (500, 500)
+        },
+        'contour_arrays': {
+            'temperature': {
+                'range': [-1.6428141593933105, 28.691740036010742],
+                'nlines': 30,
+                'nsurfaces': 10,
+                'colorBy': ('POINT_DATA', 'temperature'),
+                'colors': 'red_to_blue',
+
+                # Information for the isolines explorer.
+                'isoLinesArray': 'salinity'
+            },
+            'salinity': {
+                'range': [33.391498565673828, 36.110965728759766],
+                'nlines': 30,
+                'nsurfaces': 10,
+                'colorBy': ('POINT_DATA', 'salinity'),
+                'colors': 'rainbow',
+
+                # Information for the isolines explorer.
+                'isoLinesArray': 'temperature'
+            }
+        },
         # The directory to use for images from the explorer.
         'output': 'path/to/output/into',
         # The layers to use (not applicable to contour3d).
@@ -60,10 +60,10 @@ mpas_add_pipeline(datasets, {
             'focal_point': (0, 0, 0),
             'axis': (0, 0, 1),
             'step': (15, 15)
-        }
-    },
+        },
 
-    'earth_core': earth_core_mesh
+        'earth_core': '/.../earth-core-smooth-no-data.vtk'
+    }
 })
 
 coprocessor = MPASCreateCoProcessor(datasets)

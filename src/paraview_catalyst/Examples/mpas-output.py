@@ -12,7 +12,6 @@ from mpas_common import *
 datasets = [
     {
         'grid': 'LON_LAT_1LAYER-primal',
-        'image_pattern': 'lonlat1_%t.jpg',
         #'fields': ['salinity', 'temperature'],
 
         'writers': [
