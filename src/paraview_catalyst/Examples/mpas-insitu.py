@@ -68,7 +68,8 @@ mpas_add_pipeline(datasets, {
 
 coprocessor = MPASCreateCoProcessor(datasets)
 
-# To use other scripts, you may import them here:
+# Add paths to any other Catalyst scripts here. They will be run with the
+# current simulation.
 scripts = []
 modules = []
 for script in scripts:
