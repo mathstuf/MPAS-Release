@@ -9,7 +9,7 @@ except: from paraview.simple import *
 
 from mpas_common import *
 
-datasets = { }
+datasets = []
 
 coprocessor = MPASCreateCoProcessor(datasets)
 

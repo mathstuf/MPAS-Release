@@ -9,9 +9,10 @@ except: from paraview.simple import *
 
 from mpas_common import *
 
-datasets = {
-    'LON_LAT_1LAYER': {
+datasets = [
+    {
         'grid': 'LON_LAT_1LAYER-primal',
+        'image_pattern': 'lonlat1_%t.jpg',
         #'fields': ['salinity', 'temperature'],
 
         'writers': [
@@ -23,7 +24,7 @@ datasets = {
             }
         ]
     }
-}
+]
 
 coprocessor = MPASCreateCoProcessor(datasets)
 

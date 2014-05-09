@@ -2,18 +2,14 @@ try: paraview.simple
 except: from paraview.simple import *
 
 from paraview import coprocessing
-try:
-    from paraview import data_exploration as wx
-except:
-    wx = None
 
 import math
 
 DEFAULT_VIEW_OPTIONS = {
     'fit_to_screen': 1,
     'magnification': 1.0,
-    'width': 960,
-    'height': 540,
+    'width': 500,
+    'height': 500,
 }
 DEFAULT_VIEW_PROPERTIES = {
     'CacheKey': 0.0,
@@ -34,71 +30,9 @@ DEFAULT_VIEW_PROPERTIES = {
     'CenterAxesVisibility': 0
 }
 
-if wx is not None:
-    def slice_writer(options, fng=None):
-        if fng is None:
-            fng = wx.FileNameGenerator(options.get('dir', '.'), options['pattern'])
-
-        def create_slice_explorer():
-            data = GetActiveSource()
-            view = GetActiveView()
-            return wx.SliceExplorer(fng, view, data,
-                    options['colors'],
-                    options.get('slices', 10),
-                    options.get('normal', [0, 0, 1]),
-                    options.get('viewup', [0, 1, 0]),
-                    options.get('bound_range', [0, 1]),
-                    options.get('scale_ratio', 2))
-        return create_slice_explorer
-
-    def rotate_writer(options, fng=None):
-        if fng is None:
-            fng = wx.FileNameGenerator(options.get('dir', '.'), options['pattern'])
-
-        def create_rotate_explorer():
-            view = GetActiveView()
-            return wx.ThreeSixtyImageStackExporter(fng, view,
-                    options.get('focal_point', [0, 0, 0]),
-                    options.get('distance', 100),
-                    options.get('axis', [0, 0, 1]),
-                    options.get('step', [10, 15]))
-        return create_rotate_explorer
-
-    def contour_explorer(writer, options, fng=None):
-        if fng is None:
-            fng = wx.FileNameGenerator(options.get('dir', '.'), options['pattern'])
-
-        def create_contour_explorer():
-            data = GetActiveSource()
-            view = GetActiveView()
-            explorer = wx.ContourExplorer(fng, data, options['contours'], options['range'], options['steps'])
-            proxy = explorer.getContour()
-            rep = Show(proxy)
-
-            rep.LookupTable = options['lut']
-            rep.ColorArrayName = options['contours']
-
-            internal = writer(options['inner'], fng)
-
-            class ContourProxy(object):
-                def __init__(self, explorer, loopee):
-                    self.explorer = explorer
-                    self.loopee = loopee
-
-                def add_attribute(self, name, value):
-                    setattr(self, name, value)
-
-                def UpdatePipeline(self, time=0):
-                    for steps in self.explorer:
-                        self.loopee.UpdatePipeline(time)
-                    self.explorer.reset()
-
-            return ContourProxy(explorer, internal)
-        return create_contour_explorer
-
 def MPASCreateCoProcessor(datasets, options={}):
     freqs = {}
-    for (name, dataset) in datasets.items():
+    for dataset in datasets:
         grid = dataset['grid']
 
         # Prepare the frequency map.
@@ -113,10 +47,9 @@ def MPASCreateCoProcessor(datasets, options={}):
 
     def mpas_create_pipeline(coprocessor, datadescription):
         class MPASPipeline(object):
-            for (name, dataset) in datasets.items():
+            for dataset in datasets:
                 grid = dataset['grid']
 
-                image_pattern = dataset.get('image_pattern', '%s_%%t.png' % name)
                 # Use pi if no images are wanted since it will never have a
                 # zero modulo with an integer. Using zero causes
                 # ZeroDivisionError exceptions in coprocessing.
@@ -131,7 +64,7 @@ def MPASCreateCoProcessor(datasets, options={}):
                     view_props.update(options['view_properties'])
 
                 view = coprocessor.CreateView(CreateRenderView,
-                        image_pattern,
+                        dataset['image_pattern'],
                         image_frequency,
                         view_options['fit_to_screen'],
                         view_options['magnification'],
