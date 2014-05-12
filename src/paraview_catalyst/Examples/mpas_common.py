@@ -86,7 +86,7 @@ def MPASCreateCoProcessor(datasets, options={}):
                         if source in filters:
                             SetActiveSource(filters[source])
                         else:
-                            raise RuntimeError('Unknown source for web view: %s' % source)
+                            raise RuntimeError('Unknown source for writer: %s' % source)
                     pattern = writer.get('pattern', '')
                     writer_obj = coprocessor.CreateWriter(writer['function'], pattern, writer['frequency'])
                     if 'properties' in writer:
