@@ -15,8 +15,8 @@ mpas_add_pipeline(datasets, {
 })
 
 mpas_add_pipeline(datasets, {
-    'grid': 'X_Y_Z_NLAYER-dual',
-    'exporter': 'isolines',
+    'grid': 'X_Y_Z_1LAYER-primal',
+    'exporter': 'colorby3d',
     'fields': ('temperature', 'salinity'),
     'frequency': 5,
     'configuration': {
@@ -30,6 +30,7 @@ mpas_add_pipeline(datasets, {
                 'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'temperature'),
                 'colors': 'red_to_blue',
+                'vector_mode': 'Component',
 
                 # Information for the isolines explorer.
                 'isoLinesArray': 'salinity'
@@ -40,6 +41,7 @@ mpas_add_pipeline(datasets, {
                 'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'salinity'),
                 'colors': 'rainbow',
+                'vector_mode': 'Component',
 
                 # Information for the isolines explorer.
                 'isoLinesArray': 'temperature'
@@ -50,8 +52,8 @@ mpas_add_pipeline(datasets, {
         # The layers to use (not applicable to contour3d).
         'layers': range(15),
 
-        'title': 'temp/salinity',
-        'description': 'my simulation',
+        'title': 'colorby3d',
+        'description': 'color by 3d simulation',
 
         # Options for the rotation of the camera to dump images; all are
         # optional.
