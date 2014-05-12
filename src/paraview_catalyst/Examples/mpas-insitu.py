@@ -17,7 +17,7 @@ mpas_add_pipeline(datasets, {
 mpas_add_pipeline(datasets, {
     'grid': 'X_Y_Z_NLAYER-dual',
     'exporter': 'isolines',
-    'fields': ('temperature', 'salinity')
+    'fields': ('temperature', 'salinity'),
     'frequency': 5,
     'configuration': {
         'view_properties': {

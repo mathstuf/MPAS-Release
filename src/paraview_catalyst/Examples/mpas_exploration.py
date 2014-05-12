@@ -321,7 +321,7 @@ def writers(name, opts):
     writer = {
         'source': 'simulation',
         'function': pipeline_element,
-        'frequency': opts.get('frequency', 5)
+        'frequency': opts.get('frequency', 5),
         'properties': {}
     }
 
