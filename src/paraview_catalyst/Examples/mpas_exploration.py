@@ -1,5 +1,6 @@
 from paraview.simple import *
 from mpas_common import *
+import itertools
 try:
     from paraview import data_exploration as wx
 except:
