@@ -62,13 +62,13 @@ def MPASCreateCoProcessor(datasets, options={}):
                     for filter_desc in dataset['filters']:
                         args = filter_desc.get('args', [])
                         kwargs = filter_desc.get('kwargs', {})
-                        filt = filter_desc['function'](*args, **kwargs)
                         if 'source' in filter_desc:
                             source = filter_desc['source']
                             if source in filters:
                                 SetActiveSource(filters[source])
                             else:
                                 raise RuntimeError('Unknown source for filter: %s' % source)
+                        filt = filter_desc['function'](*args, **kwargs)
                         if 'name' in filter_desc:
                             filters[filter_desc['name']] = filt
                         if 'show' in filter_desc:
