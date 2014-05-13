@@ -17,9 +17,9 @@ def slice_writer(options, fng):
         return wx.SliceExplorer(fng, view, data,
                 options['colors'],
                 options.get('slices', 10),
-                options.get('normal', [0, 0, 1]),
-                options.get('viewup', [0, 1, 0]),
-                options.get('bound_range', [0, 1]),
+                options.get('normal', (0, 0, 1)),
+                options.get('viewup', (0, 1, 0)),
+                options.get('bound_range', (0, 1)),
                 options.get('scale_ratio', 2))
     return create_slice_explorer
 
@@ -35,10 +35,10 @@ def rotate_writer(options, fng):
     def create_rotate_explorer():
         view = GetActiveView()
         return wx.ThreeSixtyImageStackExporter(fng, view,
-                opts.get('focal_point', [0, 0, 0]),
+                opts.get('focal_point', (0, 0, 0)),
                 opts.get('distance', 100),
-                opts.get('axis', [0, 0, 1]),
-                opts.get('step', [10, 15]))
+                opts.get('axis', (0, 0, 1)),
+                opts.get('step', (10, 15)))
     return create_rotate_explorer
 
 def contour_explorer(writer, options, fng):
@@ -112,7 +112,7 @@ class MPASExplorer(object):
 DEFAULT_ISOLINES_OPTIONS = {
     'output': 'output/isolines',
     'rotate_options': {},
-    'layers': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 35]
+    'layers': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 35)
 }
 
 class IsoLines3dWriter(MPASExplorer):
@@ -186,10 +186,10 @@ class Contour3dWriter(MPASExplorer):
         self.dataconv = CellDatatoPointData()
         self.surfcont = Contour(PointMergeMethod='Uniform Binning',
                            ComputeNormals=0,
-                           Isosurfaces=[0])
+                           Isosurfaces=(0))
         self.linecont = Contour(PointMergeMethod='Uniform Binning',
                            ComputeNormals=0,
-                           Isosurfaces=[0])
+                           Isosurfaces=(0))
         self.surfcont_rep = Show(self.surfcont)
         self.linecont_rep = Show(self.linecont)
         self.explorer = rotate_writer(self.options['rotate_options'], self.fng)()
@@ -226,7 +226,7 @@ class Contour3dWriter(MPASExplorer):
 DEFAULT_COLORBY3D_OPTIONS = {
     'output': 'output/colorby3d',
     'rotate_options': {},
-    'layers': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 35]
+    'layers': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 25, 30, 35)
 }
 
 class ColorBy3dWriter(MPASExplorer):

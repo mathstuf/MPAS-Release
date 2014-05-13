@@ -7,7 +7,7 @@ datasets = []
 mpas_add_pipeline(datasets, {
     'grid': 'X_Y_Z_1LAYER-primal',
     'exporter': 'grid',
-    'fields': [], # empty list == all fields
+    'fields': (), # empty list == all fields
     'frequency': 5,
     'configuration': {
         'pattern': 'xyz1layer_%t.pvtu'
@@ -25,7 +25,7 @@ mpas_add_pipeline(datasets, {
         },
         'contour_arrays': {
             'temperature': {
-                'range': [-1.6428141593933105, 28.691740036010742],
+                'range': (-1.6428141593933105, 28.691740036010742),
                 'nlines': 30,
                 'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'temperature'),
@@ -36,7 +36,7 @@ mpas_add_pipeline(datasets, {
                 'isoLinesArray': 'salinity'
             },
             'salinity': {
-                'range': [33.391498565673828, 36.110965728759766],
+                'range': (33.391498565673828, 36.110965728759766),
                 'nlines': 30,
                 'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'salinity'),
@@ -79,7 +79,7 @@ mpas_add_pipeline(datasets, {
         },
         'contour_arrays': {
             'temperature': {
-                'range': [-1.6428141593933105, 28.691740036010742],
+                'range': (-1.6428141593933105, 28.691740036010742),
                 'nlines': 30,
                 'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'temperature'),
@@ -90,7 +90,7 @@ mpas_add_pipeline(datasets, {
                 'isoLinesArray': 'salinity'
             },
             'salinity': {
-                'range': [33.391498565673828, 36.110965728759766],
+                'range': (33.391498565673828, 36.110965728759766),
                 'nlines': 30,
                 'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'salinity'),
@@ -133,7 +133,7 @@ mpas_add_pipeline(datasets, {
         },
         'contour_arrays': {
             'temperature': {
-                'range': [-1.6428141593933105, 28.691740036010742],
+                'range': (-1.6428141593933105, 28.691740036010742),
                 'nlines': 30,
                 'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'temperature'),
@@ -144,7 +144,7 @@ mpas_add_pipeline(datasets, {
                 'isoLinesArray': 'salinity'
             },
             'salinity': {
-                'range': [33.391498565673828, 36.110965728759766],
+                'range': (33.391498565673828, 36.110965728759766),
                 'nlines': 30,
                 'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'salinity'),
