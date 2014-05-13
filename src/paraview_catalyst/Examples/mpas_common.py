@@ -139,3 +139,9 @@ def MPASDoCoProcessing(coprocessor, datadescription):
 
     # Live Visualization, if enabled.
     coprocessor.DoLiveVisualization(datadescription, "localhost", 22222)
+
+# ------------------------ Finalizing method ------------------------
+
+def MPASFinalize(coprocessor):
+    "Callback to finalize the pipeline"
+    coprocessor.Finalize()

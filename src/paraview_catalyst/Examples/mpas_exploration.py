@@ -100,10 +100,14 @@ class MPASExplorer(object):
     def set_analysis(self, explorer):
         if self.analysis is None:
             return
+        self.analysis.begin()
         explorer.set_analysis(self.analysis)
 
     def add_attribute(self, name, value):
         setattr(self, name, value)
+
+    def Finalize(self):
+        self.analysis.end()
 
 ################################################################################
 # IsoLines3d

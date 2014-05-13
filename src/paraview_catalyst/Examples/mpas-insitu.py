@@ -196,3 +196,8 @@ def DoCoProcessing(datadescription):
     MPASDoCoProcessing(coprocessor, datadescription)
     for module in modules:
         module.DoCoProcessing(datadescription)
+
+def Finalize():
+    MPASFinalize(coprocessor)
+    for module in modules:
+        module.Finalize(datadescription)
