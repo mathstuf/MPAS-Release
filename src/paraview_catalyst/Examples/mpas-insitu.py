@@ -23,19 +23,19 @@ mpas_add_pipeline(datasets, {
         'contour_arrays': {
             'temperature': {
                 'range': (-1.6428141593933105, 28.691740036010742),
-                'colorBy': ('POINT_DATA', 'temperature'),
                 'colors': 'red_to_blue',
                 'vector_mode': 'Component'
             },
             'salinity': {
                 'range': (33.391498565673828, 36.110965728759766),
-                'colorBy': ('POINT_DATA', 'salinity'),
                 'colors': 'rainbow',
                 'vector_mode': 'Component'
             }
         },
         # The directory to use for images from the explorer.
         'output': 'colorby3d',
+        # The field to contour on.
+        'field': 'temperature',
         # The layers to use.
         'layers': range(15),
 
@@ -55,7 +55,6 @@ mpas_add_pipeline(datasets, {
         'contour_arrays': {
             'temperature': {
                 'range': (-1.6428141593933105, 28.691740036010742),
-                'colorBy': ('POINT_DATA', 'temperature'),
                 'colors': 'red_to_blue',
                 'vector_mode': 'Magnitude',
 
@@ -65,7 +64,6 @@ mpas_add_pipeline(datasets, {
             },
             'salinity': {
                 'range': (33.391498565673828, 36.110965728759766),
-                'colorBy': ('POINT_DATA', 'salinity'),
                 'colors': 'rainbow',
                 'vector_mode': 'Magnitude',
 
@@ -76,6 +74,8 @@ mpas_add_pipeline(datasets, {
         },
         # The directory to use for images from the explorer.
         'output': 'contour3d',
+        # The field to color on.
+        'field': 'temperature',
 
         'title': 'contour3d',
         'description': 'contour 3d simulation',

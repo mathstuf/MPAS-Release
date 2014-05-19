@@ -129,19 +129,20 @@ class IsoLines3dWriter(MPASExplorer):
         self.layers = self.options['layers']
         self.function_pattern = '%s_%d'
 
-        # TODO: Un-hardcode temperature here.
-        self.thresh = Threshold(Scalars=('CELLS', 'temperature'), ThresholdRange=(-1000.0, 1000.0))
+        self.field = self.options['field']
+
+        self.thresh = Threshold(Scalars=('CELLS', self.field), ThresholdRange=(-1000.0, 1000.0))
         self.dataconv = CellDatatoPointData()
         self.scalar = Calculator(ResultArrayName='contour',
-                            Function=self.function_pattern % ('temperature', self.layers[0]))
+                            Function=self.function_pattern % (self.field, self.layers[0]))
         self.iso_lines = Contour(PointMergeMethod='Uniform Binning',
                            ComputeScalars=0)
         self.thresh_rep = Show(self.thresh)
         self.thresh_rep.EdgeColor = (0.0, 0.0, 0.0)
         self.thresh_rep.Representation = 'Surface'
-        self.thresh_rep.ColorArrayName = ('CELL_DATA', 'temperature')
+        self.thresh_rep.ColorArrayName = ('CELL_DATA', self.field)
         self.iso_lines_rep = Show(self.iso_lines)
-        self.iso_lines_rep.ColorArrayName = ('CELL_DATA', 'temperature')
+        self.iso_lines_rep.ColorArrayName = ('CELL_DATA', self.field)
         self.iso_lines_rep.LineWidth = 3.0
         self.explorer = rotate_writer(self.options['rotate_options'], self.fng)()
 
@@ -159,7 +160,7 @@ class IsoLines3dWriter(MPASExplorer):
             lineopts = self.luts[linefield]
             self.iso_lines.Isosurfaces = lineopts['isoLines']
             self.iso_lines_rep.LookupTable = lineopts['lut']
-            self.iso_lines_rep.ColorArrayName = lineopts['colorBy']
+            self.iso_lines_rep.ColorArrayName = ('POINT_DATA', self.field)
 
             for layer in self.layers:
                 self.thresh_rep.LookupTable.VectorComponent = layer
@@ -185,8 +186,9 @@ class Contour3dWriter(MPASExplorer):
         self.register_analysis('contour3d', '{time}/{surfaceContour}/{contourIdx}/{theta}_{phi}.jpg',
                 wx.ThreeSixtyImageStackExporter.get_data_type())
 
-        # TODO: Un-hardcode temperature here.
-        self.thresh = Threshold(Scalars=('CELLS', 'temperature'), ThresholdRange=(-1000.0, 1000.0))
+        self.field = self.options['field']
+
+        self.thresh = Threshold(Scalars=('CELLS', self.field), ThresholdRange=(-1000.0, 1000.0))
         self.dataconv = CellDatatoPointData()
         self.surfcont = Contour(PointMergeMethod='Uniform Binning',
                            ComputeNormals=0,
@@ -207,14 +209,14 @@ class Contour3dWriter(MPASExplorer):
 
             self.surfcont.ContourBy = field
             self.surfcont_rep.LookupTable = opts['lut']
-            self.surfcont_rep.ColorArrayName = opts['colorBy']
+            self.surfcont_rep.ColorArrayName = ('POINT_DATA', field)
 
             linefield = opts['isoLinesArray']
             lineopts = self.luts[linefield]
             self.linecont.ContourBy = linefield
             self.linecont.Isosurfaces = lineopts['isoLines']
             self.linecont_rep.LookupTable = lineopts['lut']
-            self.linecont_rep.ColorArrayName = lineopts['colorBy']
+            self.linecont_rep.ColorArrayName = ('POINT_DATA', linefield)
 
             for idx, value in itertools.izip(itertools.count(0), opts['isoSurfaces']):
                 self.surfcont.Isosurfaces = [value]
@@ -241,12 +243,13 @@ class ColorBy3dWriter(MPASExplorer):
                 wx.ThreeSixtyImageStackExporter.get_data_type())
 
         self.layers = self.options['layers']
+        self.field = self.options['field']
 
-        self.thresh = Threshold(Scalars=('CELLS', 'temperature'), ThresholdRange=(-1000.0, 1000.0))
+        self.thresh = Threshold(Scalars=('CELLS', self.field), ThresholdRange=(-1000.0, 1000.0))
         self.thresh_rep = Show(self.thresh)
         self.thresh_rep.EdgeColor = (0.0, 0.0, 0.0)
         self.thresh_rep.Representation = 'Surface'
-        self.thresh_rep.ColorArrayName = ('CELL_DATA', 'temperature')
+        self.thresh_rep.ColorArrayName = ('CELL_DATA', self.field)
         self.explorer = rotate_writer(self.options['rotate_options'], self.fng)()
 
         self.set_analysis(self.explorer)
