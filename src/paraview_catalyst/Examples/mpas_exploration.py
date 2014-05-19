@@ -79,6 +79,8 @@ class MPASExplorer(object):
         self.options = defaults.copy()
         self.options.update(options)
 
+        self.sim = GetActiveSource()
+
         self.analysis = None
         if 'title' in self.options and 'description' in self.options:
             self.analysis = wx.AnalysisManager(
@@ -106,6 +108,20 @@ class MPASExplorer(object):
     def add_attribute(self, name, value):
         setattr(self, name, value)
 
+    def update_layers(self, calc, field, lut, layers, explorer, time):
+        if layers is not None and self.sim.CellData[field].GetNumberOfComponents() > 1:
+            lut.VectorMode = 'Component'
+            for layer in layers:
+                lut.VectorComponent = layer
+                self.fng.update_active_arguments(layer=layer)
+                calc.Function = '%s_%d' % (field, layer)
+
+                explorer.UpdatePipeline(time)
+        else:
+                lut.VectorMode = 'Magnitude'
+                calc.Function = field
+                explorer.UpdatePipeline(time)
+
     def Finalize(self):
         self.analysis.end()
 
@@ -131,10 +147,9 @@ class IsoLines3dWriter(MPASExplorer):
 
         self.field = self.options['field']
 
+        self.calc = Calculator(AttributeMode='Cell Data')
         self.thresh = Threshold(Scalars=('CELLS', self.field), ThresholdRange=(-1000.0, 1000.0))
         self.dataconv = CellDatatoPointData()
-        self.scalar = Calculator(ResultArrayName='contour',
-                            Function=self.function_pattern % (self.field, self.layers[0]))
         self.iso_lines = Contour(PointMergeMethod='Uniform Binning',
                            ComputeScalars=0)
         self.thresh_rep = Show(self.thresh)
@@ -162,13 +177,7 @@ class IsoLines3dWriter(MPASExplorer):
             self.iso_lines_rep.LookupTable = lineopts['lut']
             self.iso_lines_rep.ColorArrayName = ('POINT_DATA', self.field)
 
-            for layer in self.layers:
-                self.thresh_rep.LookupTable.VectorComponent = layer
-
-                self.fng.update_active_arguments(layer=layer)
-                self.scalar.Function = self.function_pattern % (linefield, layer)
-
-                self.explorer.UpdatePipeline(time)
+            self.update_layers(self.calc, field, self.thresh_rep.LookupTable, self.layers, self.explorer, time)
 
 ################################################################################
 # Contour3d
@@ -188,6 +197,7 @@ class Contour3dWriter(MPASExplorer):
 
         self.field = self.options['field']
 
+        self.calc = Calculator(AttributeMode='Cell Data')
         self.thresh = Threshold(Scalars=('CELLS', self.field), ThresholdRange=(-1000.0, 1000.0))
         self.dataconv = CellDatatoPointData()
         self.surfcont = Contour(PointMergeMethod='Uniform Binning',
@@ -223,7 +233,7 @@ class Contour3dWriter(MPASExplorer):
 
                 self.fng.update_active_arguments(contourIdx=idx)
 
-                self.explorer.UpdatePipeline(time)
+                self.update_layers(self.calc, field, self.surfcont_rep.LookupTable, None, self.explorer, time)
 
 ################################################################################
 # ColorBy3d
@@ -245,6 +255,7 @@ class ColorBy3dWriter(MPASExplorer):
         self.layers = self.options['layers']
         self.field = self.options['field']
 
+        self.calc = Calculator(AttributeMode='Cell Data')
         self.thresh = Threshold(Scalars=('CELLS', self.field), ThresholdRange=(-1000.0, 1000.0))
         self.thresh_rep = Show(self.thresh)
         self.thresh_rep.EdgeColor = (0.0, 0.0, 0.0)
@@ -262,12 +273,7 @@ class ColorBy3dWriter(MPASExplorer):
             self.thresh_rep.LookupTable = opts['lut']
             self.thresh_rep.ColorArrayName = ('CELL_DATA', field)
 
-            for layer in self.layers:
-                self.thresh_rep.LookupTable.VectorComponent = layer
-
-                self.fng.update_active_arguments(layer=layer)
-
-                self.explorer.UpdatePipeline(time)
+            self.update_layers(self.calc, field, self.thresh_rep.LookupTable, self.layers, self.explorer, time)
 
 def buildIsoValues(rangeValues, nbContour):
     inc = float(rangeValues[1] - rangeValues[0]) / float(nbContour)
@@ -287,7 +293,6 @@ def buildLookupTables(luts):
                                0.752941, (dataRange[0]+dataRange[1])/2, 0.865003,
                                0.865003, 0.865003, dataRange[1],
                                0.705882, 0.0156863, 0.14902],
-                    VectorMode=lut['vector_mode'],
                     NanColor=[0.0, 0.0, 0.0],
                     ColorSpace='Diverging',
                     ScalarRangeInitialized=1.0,
@@ -298,7 +303,6 @@ def buildLookupTables(luts):
                     RGBPoints=[dataRange[0], 0.0, 0.0,
                                1.0, dataRange[1], 1.0,
                                0.0, 0.0, 0.0],
-                    VectorMode=lut['vector_mode'],
                     NanColor=[0.0, 0.0, 0.0],
                     ColorSpace='HSV',
                     ScalarRangeInitialized=1.0,

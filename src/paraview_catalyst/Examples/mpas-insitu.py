@@ -23,13 +23,11 @@ mpas_add_pipeline(datasets, {
         'contour_arrays': {
             'temperature': {
                 'range': (-1.6428141593933105, 28.691740036010742),
-                'colors': 'red_to_blue',
-                'vector_mode': 'Component'
+                'colors': 'red_to_blue'
             },
             'salinity': {
                 'range': (33.391498565673828, 36.110965728759766),
-                'colors': 'rainbow',
-                'vector_mode': 'Component'
+                'colors': 'rainbow'
             }
         },
         # The directory to use for images from the explorer.
@@ -56,7 +54,6 @@ mpas_add_pipeline(datasets, {
             'temperature': {
                 'range': (-1.6428141593933105, 28.691740036010742),
                 'colors': 'red_to_blue',
-                'vector_mode': 'Magnitude',
 
                 # Information for the contour explorer.
                 'nsurfaces': 10,
@@ -65,7 +62,6 @@ mpas_add_pipeline(datasets, {
             'salinity': {
                 'range': (33.391498565673828, 36.110965728759766),
                 'colors': 'rainbow',
-                'vector_mode': 'Magnitude',
 
                 # Information for the contour explorer.
                 'nsurfaces': 10,
