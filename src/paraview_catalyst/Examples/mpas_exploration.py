@@ -155,9 +155,7 @@ class IsoLines3dWriter(MPASExplorer):
         self.thresh_rep = Show(self.thresh)
         self.thresh_rep.EdgeColor = (0.0, 0.0, 0.0)
         self.thresh_rep.Representation = 'Surface'
-        self.thresh_rep.ColorArrayName = ('CELL_DATA', self.field)
         self.iso_lines_rep = Show(self.iso_lines)
-        self.iso_lines_rep.ColorArrayName = ('CELL_DATA', self.field)
         self.iso_lines_rep.LineWidth = 3.0
         self.explorer = rotate_writer(self.options['rotate_options'], self.fng)()
 
@@ -260,7 +258,6 @@ class ColorBy3dWriter(MPASExplorer):
         self.thresh_rep = Show(self.thresh)
         self.thresh_rep.EdgeColor = (0.0, 0.0, 0.0)
         self.thresh_rep.Representation = 'Surface'
-        self.thresh_rep.ColorArrayName = ('CELL_DATA', self.field)
         self.explorer = rotate_writer(self.options['rotate_options'], self.fng)()
 
         self.set_analysis(self.explorer)
