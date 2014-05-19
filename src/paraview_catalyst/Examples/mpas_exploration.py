@@ -312,7 +312,7 @@ def buildLookupTables(luts):
     return luts
 
 
-def writers(name, opts):
+def writers(frequency, name, opts):
     clsmap = {
         'contour3d': Contour3dWriter,
         'colorby3d': ColorBy3dWriter,
@@ -329,7 +329,7 @@ def writers(name, opts):
     writer = {
         'source': 'simulation',
         'function': pipeline_element,
-        'frequency': opts.get('frequency', 5),
+        'frequency': frequency,
         'properties': {}
     }
 
@@ -355,8 +355,6 @@ def mpas_add_pipeline(datasets, desc, **kwargs):
         pipe['fields'] = desc['fields']
 
     opts = desc['configuration']
-    # Copy frequency down.
-    opts['frequency'] = desc['frequency']
 
     if 'view_properties' in opts:
         pipe['view_properties'] = opts['view_properties']
@@ -371,6 +369,6 @@ def mpas_add_pipeline(datasets, desc, **kwargs):
             }
         })
 
-    pipe['writers'].append(writers(desc['exporter'], desc['configuration']))
+    pipe['writers'].append(writers(desc['frequency'], desc['exporter'], desc['configuration']))
 
     datasets.append(pipe)
