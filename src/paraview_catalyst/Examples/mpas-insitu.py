@@ -20,49 +20,27 @@ mpas_add_pipeline(datasets, {
     'fields': ('temperature', 'salinity'),
     'frequency': 5,
     'configuration': {
-        'view_properties': {
-            'ViewSize': (500, 500)
-        },
         'contour_arrays': {
             'temperature': {
                 'range': (-1.6428141593933105, 28.691740036010742),
-                'nlines': 30,
-                'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'temperature'),
                 'colors': 'red_to_blue',
-                'vector_mode': 'Component',
-
-                # Information for the isolines explorer.
-                'isoLinesArray': 'salinity'
+                'vector_mode': 'Component'
             },
             'salinity': {
                 'range': (33.391498565673828, 36.110965728759766),
-                'nlines': 30,
-                'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'salinity'),
                 'colors': 'rainbow',
-                'vector_mode': 'Component',
-
-                # Information for the isolines explorer.
-                'isoLinesArray': 'temperature'
+                'vector_mode': 'Component'
             }
         },
         # The directory to use for images from the explorer.
         'output': 'colorby3d',
-        # The layers to use (not applicable to contour3d).
+        # The layers to use.
         'layers': range(15),
 
         'title': 'colorby3d',
         'description': 'color by 3d simulation',
-
-        # Options for the rotation of the camera to dump images; all are
-        # optional.
-        'rotate_options': {
-            'distance': 25000000,
-            'focal_point': (0, 0, 0),
-            'axis': (0, 0, 1),
-            'step': (15, 15)
-        },
 
         'earth_core': '/.../earth-core-smooth-no-data.vtk'
     }
@@ -74,14 +52,10 @@ mpas_add_pipeline(datasets, {
     'fields': ('temperature', 'salinity'),
     'frequency': 5,
     'configuration': {
-        'view_properties': {
-            'ViewSize': (500, 500)
-        },
         'contour_arrays': {
             'temperature': {
                 'range': (-1.6428141593933105, 28.691740036010742),
                 'nlines': 30,
-                'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'temperature'),
                 'colors': 'red_to_blue',
                 'vector_mode': 'Component',
@@ -92,7 +66,6 @@ mpas_add_pipeline(datasets, {
             'salinity': {
                 'range': (33.391498565673828, 36.110965728759766),
                 'nlines': 30,
-                'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'salinity'),
                 'colors': 'rainbow',
                 'vector_mode': 'Component',
@@ -103,20 +76,11 @@ mpas_add_pipeline(datasets, {
         },
         # The directory to use for images from the explorer.
         'output': 'isolines3d',
-        # The layers to use (not applicable to contour3d).
+        # The layers to use.
         'layers': range(15),
 
         'title': 'isolines3d',
         'description': 'isolines 3d simulation',
-
-        # Options for the rotation of the camera to dump images; all are
-        # optional.
-        'rotate_options': {
-            'distance': 25000000,
-            'focal_point': (0, 0, 0),
-            'axis': (0, 0, 1),
-            'step': (15, 15)
-        },
 
         'earth_core': '/.../earth-core-smooth-no-data.vtk'
     }
@@ -128,49 +92,33 @@ mpas_add_pipeline(datasets, {
     'fields': ('temperature', 'salinity'),
     'frequency': 5,
     'configuration': {
-        'view_properties': {
-            'ViewSize': (500, 500)
-        },
         'contour_arrays': {
             'temperature': {
                 'range': (-1.6428141593933105, 28.691740036010742),
-                'nlines': 30,
-                'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'temperature'),
                 'colors': 'red_to_blue',
                 'vector_mode': 'Magnitude',
 
-                # Information for the isolines explorer.
+                # Information for the contour explorer.
+                'nsurfaces': 10,
                 'isoLinesArray': 'salinity'
             },
             'salinity': {
                 'range': (33.391498565673828, 36.110965728759766),
-                'nlines': 30,
-                'nsurfaces': 10,
                 'colorBy': ('POINT_DATA', 'salinity'),
                 'colors': 'rainbow',
                 'vector_mode': 'Magnitude',
 
-                # Information for the isolines explorer.
+                # Information for the contour explorer.
+                'nsurfaces': 10,
                 'isoLinesArray': 'temperature'
             }
         },
         # The directory to use for images from the explorer.
-        'output': 'isolines',
-        # The layers to use (not applicable to contour3d).
-        'layers': range(15),
+        'output': 'contour3d',
 
         'title': 'contour3d',
         'description': 'contour 3d simulation',
-
-        # Options for the rotation of the camera to dump images; all are
-        # optional.
-        'rotate_options': {
-            'distance': 25000000,
-            'focal_point': (0, 0, 0),
-            'axis': (0, 0, 1),
-            'step': (15, 15)
-        },
 
         'earth_core': '/.../earth-core-smooth-no-data.vtk'
     }
