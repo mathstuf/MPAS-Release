@@ -5,17 +5,17 @@ from mpas_exploration import *
 datasets = []
 
 mpas_add_pipeline(datasets, {
-    'grid': 'X_Y_Z_1LAYER-primal',
+    'grid': 'X_Y_Z_NLAYER-primal',
     'exporter': 'grid',
     'fields': (), # empty list == all fields
     'frequency': 5,
     'configuration': {
-        'pattern': 'xyz1layer_%t.pvtu'
+        'pattern': 'xyznlayer_%t.pvtu'
     }
 })
 
 mpas_add_pipeline(datasets, {
-    'grid': 'X_Y_Z_1LAYER-primal',
+    'grid': 'X_Y_Z_NLAYER-primal',
     'exporter': 'colorby3d',
     'fields': ('temperature', 'salinity'),
     'frequency': 5,
@@ -69,7 +69,7 @@ mpas_add_pipeline(datasets, {
 })
 
 mpas_add_pipeline(datasets, {
-    'grid': 'X_Y_Z_1LAYER-primal',
+    'grid': 'X_Y_Z_NLAYER-primal',
     'exporter': 'isolines3d',
     'fields': ('temperature', 'salinity'),
     'frequency': 5,
@@ -123,7 +123,7 @@ mpas_add_pipeline(datasets, {
 })
 
 mpas_add_pipeline(datasets, {
-    'grid': 'X_Y_Z_1LAYER-primal',
+    'grid': 'X_Y_Z_NLAYER-primal',
     'exporter': 'contour3d',
     'fields': ('temperature', 'salinity'),
     'frequency': 5,
