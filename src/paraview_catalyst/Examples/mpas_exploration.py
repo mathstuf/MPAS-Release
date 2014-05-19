@@ -173,7 +173,7 @@ class IsoLines3dWriter(MPASExplorer):
             lineopts = self.luts[linefield]
             self.iso_lines.Isosurfaces = lineopts['isoLines']
             self.iso_lines_rep.LookupTable = lineopts['lut']
-            self.iso_lines_rep.ColorArrayName = ('POINT_DATA', self.field)
+            self.iso_lines_rep.ColorArrayName = ('POINT_DATA', linefield)
 
             self.update_layers(self.calc, field, self.thresh_rep.LookupTable, self.layers, self.explorer, time)
 
