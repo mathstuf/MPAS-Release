@@ -195,7 +195,7 @@ class Contour3dWriter(MPASExplorer):
 
         self.field = self.options['field']
 
-        self.calc = Calculator(AttributeMode='Cell Data')
+        self.calc = Calculator(AttributeMode='Cell Data', Function='')
         self.thresh = Threshold(Scalars=('CELLS', self.field), ThresholdRange=(-1000.0, 1000.0))
         self.dataconv = CellDatatoPointData()
         self.surfcont = Contour(PointMergeMethod='Uniform Binning',
