@@ -171,7 +171,7 @@ class IsoLines3dWriter(MPASExplorer):
 
             linefield = opts['isoLinesArray']
             lineopts = self.luts[linefield]
-            self.iso_lines.Isosurfaces = lineopts['isoLines']
+            self.iso_lines.Isosurfaces = lineopts['isoSurfaces']
             self.iso_lines_rep.LookupTable = lineopts['lut']
             self.iso_lines_rep.ColorArrayName = ('POINT_DATA', linefield)
 
@@ -222,7 +222,7 @@ class Contour3dWriter(MPASExplorer):
             linefield = opts['isoLinesArray']
             lineopts = self.luts[linefield]
             self.linecont.ContourBy = linefield
-            self.linecont.Isosurfaces = lineopts['isoLines']
+            self.linecont.Isosurfaces = lineopts['isoSurfaces']
             self.linecont_rep.LookupTable = lineopts['lut']
             self.linecont_rep.ColorArrayName = ('POINT_DATA', linefield)
 
@@ -306,7 +306,7 @@ def buildLookupTables(luts):
                     LockScalarRange=1)
 
         if 'nlines' in lut:
-            lut['isoLines'] = buildIsoValues(dataRange, lut['nlines'])
+            lut['isoSurfaces'] = buildIsoValues(dataRange, lut['nlines'])
         if 'nsurfaces' in lut:
             lut['isoSurfaces'] = buildIsoValues(dataRange, lut['nsurfaces'])
 
